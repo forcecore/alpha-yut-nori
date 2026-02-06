@@ -1,0 +1,11 @@
+# Yut Nori Game Engine
+# Python 3.8+ required
+
+# No external dependencies required for base game
+# Standard library only
+
+# Development dependencies
+pytest>=7.0.0
+
+# Optional for colored terminal output
+# colorama>=0.4.6
