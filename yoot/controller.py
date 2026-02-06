@@ -2,6 +2,7 @@
 Player controllers for Yut Nori — ABC plus human and AI implementations.
 """
 
+import copy
 import random
 from abc import ABC, abstractmethod
 
@@ -138,3 +139,147 @@ class HumanController(PlayerController):
 
             steps, _dest = move_map[move_choice]
             return selected_piece_id, steps
+
+
+class MonteCarloController(PlayerController):
+    """Monte Carlo Tree Search AI — evaluates moves via random rollout simulations."""
+
+    MAX_ROLLOUT_TURNS = 200
+
+    def __init__(self, game, player_id, num_simulations=3000):
+        self.game = game
+        self.player_id = player_id
+        self.num_simulations = num_simulations
+
+    def choose_move(self, game_state: dict, legal_moves: list) -> tuple[int, int]:
+        # Deduplicate: stacked pieces at the same position produce identical outcomes,
+        # so group by (position_or_entry, steps) and keep one representative piece_id.
+        seen = {}  # (position_key, steps) -> piece_id
+        for pid, steps, _dest in legal_moves:
+            if pid == -1:
+                key = ('entry', steps)
+            else:
+                pos = self.game.players[self.player_id].get_piece_by_id(pid).position
+                key = (pos, steps)
+            if key not in seen:
+                seen[key] = pid
+        candidates = [(pid, steps) for (_, steps), pid in seen.items()]
+
+        if len(candidates) == 1:
+            return candidates[0]
+
+        results = []
+        for piece_id, steps in candidates:
+            wins = sum(
+                self._simulate(piece_id, steps)
+                for _ in range(self.num_simulations)
+            )
+            win_rate = wins / self.num_simulations
+            results.append(((piece_id, steps), win_rate))
+
+        results.sort(key=lambda r: r[1], reverse=True)
+
+        print(f"  [MC] Evaluating {len(results)} moves ({self.num_simulations} sims each):")
+        for (pid, st), wr in results:
+            marker = " <<" if (pid, st) == results[0][0] else ""
+            print(f"    piece={pid} steps={st}: {wr:.1%}{marker}")
+
+        return results[0][0]
+
+    def _simulate(self, piece_id: int, steps: int) -> float:
+        """Run one random rollout. Win = finishing at the next available rank."""
+        sim = self._clone_game()
+        player_id = self.player_id
+        # "Winning" means being the next player to finish (best achievable rank)
+        target_rank_idx = len(sim.rankings)
+
+        # Apply the candidate move
+        success, captured = sim.move_piece(player_id, piece_id, steps)
+        if not success:
+            return 0.0
+
+        if captured:
+            sim.throw_phase(is_bonus=True)
+
+        sim.check_win_condition()
+        if len(sim.rankings) > target_rank_idx:
+            return 1.0 if sim.rankings[target_rank_idx] == player_id else 0.0
+
+        # Consume remaining accumulated_moves with random play
+        self._play_remaining_moves(sim, player_id)
+
+        if len(sim.rankings) > target_rank_idx:
+            return 1.0 if sim.rankings[target_rank_idx] == player_id else 0.0
+
+        if sim.game_state != "playing":
+            return 0.0
+
+        # Full random playout
+        sim.next_turn()
+
+        for _ in range(self.MAX_ROLLOUT_TURNS):
+            if sim.game_state != "playing":
+                break
+
+            current_pid = sim.current_player_idx
+            sim.throw_phase()
+
+            self._play_remaining_moves(sim, current_pid)
+
+            # Someone took the next rank — check if it was us
+            if len(sim.rankings) > target_rank_idx:
+                return 1.0 if sim.rankings[target_rank_idx] == player_id else 0.0
+
+            sim.next_turn()
+
+        if len(sim.rankings) > target_rank_idx:
+            return 1.0 if sim.rankings[target_rank_idx] == player_id else 0.0
+
+        return self._heuristic_score(sim)
+
+    def _clone_game(self):
+        """Deepcopy the game, sharing the Board to avoid file I/O."""
+        board = self.game.board
+        self.game.board = None
+        sim = copy.deepcopy(self.game)
+        self.game.board = board
+        sim.board = board
+        return sim
+
+    def _play_remaining_moves(self, sim, player_id):
+        """Consume all accumulated_moves with random legal choices."""
+        while sim.accumulated_moves:
+            legal = sim.get_legal_moves(player_id)
+            if not legal:
+                sim.accumulated_moves = []
+                break
+
+            pid, steps, _dest = random.choice(legal)
+            success, captured = sim.move_piece(player_id, pid, steps)
+
+            if not success:
+                # Shouldn't happen, but avoid infinite loop
+                sim.accumulated_moves = []
+                break
+
+            if captured:
+                sim.throw_phase(is_bonus=True)
+
+            if sim.check_win_condition():
+                break
+
+    def _heuristic_score(self, sim) -> float:
+        """Score an unfinished game: ratio of finished pieces with a bonus for leading."""
+        my_finished = len(sim.players[self.player_id].get_finished_pieces())
+        score = my_finished / 4.0
+
+        best_opponent = max(
+            len(p.get_finished_pieces())
+            for p in sim.players
+            if p.player_id != self.player_id
+        )
+
+        if my_finished > best_opponent:
+            score += 0.1
+
+        return score

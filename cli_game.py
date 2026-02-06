@@ -5,7 +5,7 @@ CLI interface for playing Yut Nori.
 
 import os
 from typing import Optional
-from yoot import YutGame, HumanController, RandomController
+from yoot import YutGame, PlayerController, HumanController, RandomController, MonteCarloController
 
 
 def clear_screen():
@@ -240,19 +240,22 @@ def main():
     game = YutGame(player_names, num_players)
 
     # Ask per-player: human or AI?
-    controllers: dict[int, HumanController | RandomController] = {}
+    controllers: dict[int, PlayerController] = {}
     any_human = False
     for i, name in enumerate(player_names):
         while True:
-            choice = input(f"Is {name} human or AI? (h/a, default h): ").strip().lower()
+            choice = input(f"Player type for {name}? (h)uman / (r)andom AI / (m)onte Carlo AI [default h]: ").strip().lower()
             if choice in ('', 'h'):
                 controllers[i] = HumanController(game, game.players[i])
                 any_human = True
                 break
-            if choice == 'a':
+            if choice == 'r':
                 controllers[i] = RandomController()
                 break
-            print("Please enter 'h' or 'a'.")
+            if choice == 'm':
+                controllers[i] = MonteCarloController(game, i)
+                break
+            print("Please enter 'h', 'r', or 'm'.")
 
     all_ai = not any_human
 
@@ -278,7 +281,11 @@ def main():
             display_board(game)
             display_recent_moves(game, count=10)
             print(f"\n{'='*60}")
-            print(f"{game.players[game.winner].name} WINS!")
+            print("FINAL RANKINGS")
+            print(f"{'='*60}")
+            for place, pid in enumerate(game.rankings, 1):
+                label = "does the dishes!" if place == len(game.rankings) else ""
+                print(f"  #{place}  {game.players[pid].name}  {label}")
             print(f"{'='*60}\n")
             break
 

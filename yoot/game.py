@@ -29,7 +29,8 @@ class YutGame:
         self.players = [Player(i, name) for i, name in enumerate(player_names)]
         self.current_player_idx = 0
         self.game_state = "playing"
-        self.winner: Optional[int] = None
+        self.winner: Optional[int] = None  # first player to finish (back-compat)
+        self.rankings: List[int] = []  # player_ids in finish order
         self.accumulated_moves: List[int] = []
         self.move_history: List[str] = []
 
@@ -175,8 +176,6 @@ class YutGame:
 
     def check_capture(self, player_id: int, position: str) -> bool:
         """Check if a piece at position captures opponent pieces."""
-        if position == '00':
-            return False
 
         captured_any = False
 
@@ -201,18 +200,33 @@ class YutGame:
         return captured_any
 
     def check_win_condition(self) -> bool:
-        """Check if any player has won."""
+        """Check if any player has newly finished. Game ends when only one remains."""
+        changed = False
         for player in self.players:
-            if player.has_finished():
-                self.game_state = "finished"
-                self.winner = player.player_id
-                self.log_move(f"{player.name} wins the game!")
-                return True
-        return False
+            if player.has_finished() and player.player_id not in self.rankings:
+                self.rankings.append(player.player_id)
+                place = len(self.rankings)
+                self.log_move(f"{player.name} finishes in place #{place}!")
+                if self.winner is None:
+                    self.winner = player.player_id
+                changed = True
+
+        # Game over when all but one player have finished
+        remaining = [p for p in self.players if p.player_id not in self.rankings]
+        if len(remaining) <= 1:
+            if remaining:
+                self.rankings.append(remaining[0].player_id)
+            self.game_state = "finished"
+            return True
+
+        return changed
 
     def next_turn(self):
-        """Advance to next player's turn."""
-        self.current_player_idx = (self.current_player_idx + 1) % self.num_players
+        """Advance to next player's turn, skipping finished players."""
+        for _ in range(self.num_players):
+            self.current_player_idx = (self.current_player_idx + 1) % self.num_players
+            if self.current_player_idx not in self.rankings:
+                break
         self.accumulated_moves = []
 
     def log_move(self, message: str):
@@ -225,6 +239,7 @@ class YutGame:
             'current_player': self.current_player_idx,
             'game_state': self.game_state,
             'winner': self.winner,
+            'rankings': self.rankings.copy(),
             'accumulated_moves': self.accumulated_moves.copy(),
             'players': [
                 {
