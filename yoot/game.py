@@ -2,7 +2,7 @@
 Main game engine for Yut Nori.
 """
 
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 from .board import Board
 from .player import Player
 from .piece import Piece

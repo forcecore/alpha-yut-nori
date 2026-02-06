@@ -151,10 +151,6 @@ class Board:
         """Check if landing on this position triggers a diagonal shortcut."""
         return position in ('05', '10')
 
-    def is_on_diagonal(self, position: str) -> bool:
-        """Check if position is on a diagonal path."""
-        return position in self.DIAGONAL_CELLS
-
     def render_board(self, pieces: List) -> str:
         """
         Create board visualization by replacing positions with pieces.

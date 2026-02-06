@@ -26,7 +26,7 @@ def test_basic_game_flow():
     # Test entering piece
     if game.accumulated_moves:
         steps = game.accumulated_moves[0]
-        success = game.move_piece(0, -1, steps)
+        success, _ = game.move_piece(0, -1, steps)
         print(f"✓ Entered piece: {success}")
 
     # Test board rendering
@@ -45,18 +45,18 @@ def test_piece_movement():
     # Manually set up some pieces
     player = game.players[0]
     piece1 = player.pieces[0]
-    piece1.enter_board(1)
+    piece1.enter_board('01')
     print(f"✓ Piece entered at position {piece1.position}")
 
     # Test movement
     game.accumulated_moves = [2]
-    success = game.move_piece(0, 0, 2)
+    success, _ = game.move_piece(0, 0, 2)
     print(f"✓ Moved piece: {success}, new position: {piece1.position}")
 
     # Test stacking
     piece2 = player.pieces[1]
-    piece2.enter_board(piece1.position)
-    stacks = game._get_stack_at_position(0, piece1.position)
+    piece2.enter_board('03')  # Same position as piece1 after moving 2 from 01
+    stacks = game._get_stack_at_position(0, '03')
     print(f"✓ Stack created: {len(stacks)} pieces at position {piece1.position}")
 
     print("\n✓ All movement tests passed!")
@@ -73,17 +73,16 @@ def test_capture():
     player2 = game.players[1]
 
     piece1 = player1.pieces[0]
-    piece1.enter_board(5)
+    piece1.enter_board('05')
 
     piece2 = player2.pieces[0]
-    piece2.enter_board(1)
+    piece2.enter_board('01')
 
     print(f"✓ Set up: P1 piece at {piece1.position}, P2 piece at {piece2.position}")
 
     # Move P2 piece to capture P1
     game.accumulated_moves = [4]
-    old_pos = piece1.position
-    game.move_piece(1, 0, 4)  # Should land on position 5 and capture
+    game.move_piece(1, 0, 4)  # Should land on position 05 and capture
 
     print(f"✓ P2 moved to {piece2.position}, P1 captured (active={piece1.is_active})")
 
@@ -97,10 +96,10 @@ def test_win_condition():
     game = YutGame()
     player = game.players[0]
 
-    # Move all pieces to goal
+    # Finish all pieces properly
     for piece in player.pieces:
-        piece.position = -1
-        piece.is_active = False
+        piece.enter_board('01')
+        piece.finish()
 
     won = game.check_win_condition()
     print(f"✓ Win condition detected: {won}")
@@ -114,7 +113,7 @@ def test_throw_probabilities():
     """Test throw distribution."""
     print("\nTesting throw probabilities (1000 throws)...")
 
-    counts = {"do": 0, "gae": 0, "geol": 0, "yut": 0, "mo": 0}
+    counts = {"do": 0, "back_do": 0, "gae": 0, "geol": 0, "yut": 0, "mo": 0}
 
     for _ in range(1000):
         throw_name, _ = YutThrow.throw()

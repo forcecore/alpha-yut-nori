@@ -48,13 +48,12 @@ class YutThrow:
         One stick is designated as "back Do" - if Do is thrown and that
         stick is the flat one, it's back Do (move backwards).
 
-        Yut sticks are unfair coins: 33% chance of landing flat side up.
+        Yut sticks are unfair coins: 60% chance of landing flat side up.
 
         Returns:
             Tuple of (throw_name, move_value)
         """
         # Simulate which sticks land flat (0-3 indices)
-        # Each stick has 33% chance of landing flat side up
         sticks = [1 if random.random() < YutThrow.FLAT_PROBABILITY else 0
                   for _ in range(4)]
         flat_count = sum(sticks)

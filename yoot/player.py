@@ -2,7 +2,7 @@
 Player state management for Yut Nori.
 """
 
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from .piece import Piece
 
 
@@ -39,14 +39,14 @@ class Player:
         """Check if all pieces have reached the goal."""
         return len(self.get_finished_pieces()) == self.NUM_PIECES
 
-    def get_stacks(self) -> Dict[int, List[Piece]]:
+    def get_stacks(self) -> Dict[str, List[Piece]]:
         """
         Group pieces by position (stacks).
 
         Returns:
             Dictionary mapping position to list of pieces at that position
         """
-        stacks: Dict[int, List[Piece]] = {}
+        stacks: Dict[str, List[Piece]] = {}
         for piece in self.get_active_pieces():
             pos = piece.position
             if pos is not None:
