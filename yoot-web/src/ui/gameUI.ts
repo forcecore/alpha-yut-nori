@@ -74,8 +74,8 @@ export class GameUI {
           <input type="text" value="${defaultNames[i]}" data-player="${i}" class="player-name-input" placeholder="Player ${i + 1}" />
           <select data-player="${i}" class="player-type-select">
             <option value="human"${i === 0 ? ' selected' : ''}>Human</option>
-            <option value="random"${i >= 1 && i < 2 ? ' selected' : ''}>Random AI</option>
-            <option value="mc"${i >= 2 ? ' selected' : ''}>MC AI</option>
+            <option value="random"${i >= 1 && i < 2 ? ' selected' : ''}>AI (Easy)</option>
+            <option value="mc"${i >= 2 ? ' selected' : ''}>AlphaYutNori</option>
           </select>
         `;
         // Default: first player human, rest random
@@ -605,8 +605,9 @@ export class GameUI {
       const isFinished = rankIdx !== -1;
       const isLast = rankIdx === numPlayers - 1;
       const medal = (isFinished && !isLast) ? (medals[rankIdx] ?? '') : '';
-      const typeLabel = this.controllerTypes[player.playerId] === 'human' ? '' :
-        ` (${this.controllerTypes[player.playerId].toUpperCase()})`;
+      const ctrlType = this.controllerTypes[player.playerId];
+      const typeLabel = ctrlType === 'human' ? '' :
+        ctrlType === 'random' ? ' (Easy)' : ' (AlphaYutNori)';
 
       html += `
         <div class="player-status-item ${isCurrent ? 'current' : ''}" style="${isFinished ? 'opacity:0.5' : ''}">
