@@ -581,21 +581,37 @@ export class GameUI {
   }
 
   private updatePlayerStatus(): void {
+    const medals = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
+    const rankings = this.game.rankings;
+    const numPlayers = this.game.players.length;
+
+    // Sort: still playing first (by playerId), then finished (by rank order)
+    const sorted = [...this.game.players].sort((a, b) => {
+      const aRank = rankings.indexOf(a.playerId);
+      const bRank = rankings.indexOf(b.playerId);
+      const aFinished = aRank !== -1;
+      const bFinished = bRank !== -1;
+      if (aFinished !== bFinished) return aFinished ? 1 : -1;
+      if (aFinished) return aRank - bRank;
+      return a.playerId - b.playerId;
+    });
+
     let html = '<h3>Players</h3>';
-    for (const player of this.game.players) {
+    for (const player of sorted) {
       const isCurrent = player.playerId === this.game.currentPlayerIdx;
       const color = PLAYER_COLORS[player.playerId];
       const finished = player.getFinishedPieces().length;
-      const active = player.getActivePieces().length;
-      const waiting = player.getInactivePieces().length;
-      const isFinished = this.game.rankings.includes(player.playerId);
+      const rankIdx = rankings.indexOf(player.playerId);
+      const isFinished = rankIdx !== -1;
+      const isLast = rankIdx === numPlayers - 1;
+      const medal = (isFinished && !isLast) ? (medals[rankIdx] ?? '') : '';
       const typeLabel = this.controllerTypes[player.playerId] === 'human' ? '' :
         ` (${this.controllerTypes[player.playerId].toUpperCase()})`;
 
       html += `
         <div class="player-status-item ${isCurrent ? 'current' : ''}" style="${isFinished ? 'opacity:0.5' : ''}">
           <span class="player-dot" style="background:${color}"></span>
-          <span class="player-name">${player.name}${typeLabel}</span>
+          <span class="player-name">${medal}${medal ? ' ' : ''}${player.name}${typeLabel}</span>
           <span class="player-score">${finished}/4</span>
         </div>
       `;
