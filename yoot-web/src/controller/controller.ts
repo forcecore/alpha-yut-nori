@@ -7,4 +7,4 @@ export interface PlayerController {
   ): Promise<{ pieceId: number; steps: number } | null>;
 }
 
-export type ControllerType = 'human' | 'random' | 'mc';
+export type ControllerType = 'human' | 'random' | 'mc' | 'mcts';

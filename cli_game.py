@@ -5,7 +5,7 @@ CLI interface for playing Yut Nori.
 
 import os
 from typing import Optional
-from yoot import YutGame, PlayerController, HumanController, RandomController, MonteCarloController
+from yoot import YutGame, PlayerController, HumanController, RandomController, MonteCarloController, MCTSController
 
 
 def clear_screen():
@@ -244,7 +244,7 @@ def main():
     any_human = False
     for i, name in enumerate(player_names):
         while True:
-            choice = input(f"Player type for {name}? (h)uman / (r)andom AI / (m)onte Carlo AI [default h]: ").strip().lower()
+            choice = input(f"Player type for {name}? (h)uman / (r)andom AI / (m)onte Carlo AI / (a)lphaYutNori MCTS [default h]: ").strip().lower()
             if choice in ('', 'h'):
                 controllers[i] = HumanController(game, game.players[i])
                 any_human = True
@@ -255,7 +255,10 @@ def main():
             if choice == 'm':
                 controllers[i] = MonteCarloController(game, i)
                 break
-            print("Please enter 'h', 'r', or 'm'.")
+            if choice == 'a':
+                controllers[i] = MCTSController(game, i)
+                break
+            print("Please enter 'h', 'r', 'm', or 'a'.")
 
     all_ai = not any_human
 

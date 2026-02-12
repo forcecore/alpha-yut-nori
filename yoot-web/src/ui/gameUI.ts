@@ -5,6 +5,7 @@ import { ThrowAnimation } from './throwAnimation';
 import { HumanController } from '../controller/humanController';
 import { RandomController } from '../controller/randomController';
 import { MonteCarloController } from '../controller/mcController';
+import { MCTSController } from '../controller/mctsController';
 import type { PlayerController, ControllerType } from '../controller/controller';
 import type { LegalMove, ThrowResult } from '../engine/types';
 import { PLAYER_COLORS, PIECE_KEYS } from './constants';
@@ -75,7 +76,8 @@ export class GameUI {
           <select data-player="${i}" class="player-type-select">
             <option value="human"${i === 0 ? ' selected' : ''}>Human</option>
             <option value="random"${i >= 1 && i < 2 ? ' selected' : ''}>AI (Easy)</option>
-            <option value="mc"${i >= 2 ? ' selected' : ''}>AlphaYutNori</option>
+            <option value="mc"${i >= 2 ? ' selected' : ''}>AI (Normal)</option>
+            <option value="mcts">AlphaYutNori</option>
           </select>
         `;
         // Default: first player human, rest random
@@ -191,6 +193,9 @@ export class GameUI {
           break;
         case 'mc':
           this.controllers.push(new MonteCarloController(this.game, i, 100));
+          break;
+        case 'mcts':
+          this.controllers.push(new MCTSController(this.game, i, 1000));
           break;
       }
     }
@@ -618,7 +623,8 @@ export class GameUI {
       const medal = (isFinished && !isLast) ? (medals[rankIdx] ?? '') : '';
       const ctrlType = this.controllerTypes[player.playerId];
       const typeLabel = ctrlType === 'human' ? '' :
-        ctrlType === 'random' ? ' (Easy)' : ' (AlphaYutNori)';
+        ctrlType === 'random' ? ' (Easy)' :
+        ctrlType === 'mcts' ? ' (AlphaYutNori)' : ' (Normal)';
 
       html += `
         <div class="player-status-item ${isCurrent ? 'current' : ''}" style="${isFinished ? 'opacity:0.5' : ''}">
