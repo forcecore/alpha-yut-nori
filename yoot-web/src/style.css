@@ -452,6 +452,23 @@ body {
   animation: pulse 1s ease-in-out infinite;
 }
 
+.exit-ray {
+  stroke: #ffeb3b;
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.8;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.exit-rays-group {
+  animation: exit-rotate 4s linear infinite;
+}
+
+@keyframes exit-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }

@@ -68,6 +68,13 @@ export class YutGame {
     const moves: LegalMove[] = [];
 
     for (const piece of player.getActivePieces()) {
+      // Special case: at 00 with hasMoved → any move value exits the board
+      if (piece.position === '00' && piece.hasMoved) {
+        for (const steps of this.accumulatedMoves) {
+          moves.push({ pieceId: piece.pieceId, steps, destination: 'EXIT' });
+        }
+        continue;
+      }
       for (const steps of this.accumulatedMoves) {
         const dest = this.board.getNextPosition(piece.position!, steps);
         if (dest !== null) {

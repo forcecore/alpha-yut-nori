@@ -296,6 +296,12 @@ export class BoardRenderer {
     this.svg.appendChild(this.highlightLayer);
 
     for (const [pos, key] of destKeys) {
+      if (pos === 'EXIT') {
+        // Draw arced exit arrow from cell 00
+        this.drawExitArrow(key);
+        continue;
+      }
+
       const coord = POSITION_COORDS[pos];
       if (!coord) continue;
 
@@ -325,6 +331,50 @@ export class BoardRenderer {
 
       this.highlightLayer.appendChild(g);
     }
+  }
+
+  private drawExitArrow(key: string): void {
+    const origin = POSITION_COORDS['00'];
+    const cx = origin.x;
+    const cy = origin.y;
+
+    const g = document.createElementNS(SVG_NS, 'g');
+    g.classList.add('exit-indicator');
+    g.style.cursor = 'pointer';
+    g.addEventListener('click', () => {
+      this.onPositionClickCb?.('EXIT');
+    });
+
+    // Rotating rays around position 00
+    const raysGroup = document.createElementNS(SVG_NS, 'g');
+    raysGroup.classList.add('exit-rays-group');
+    raysGroup.style.transformOrigin = `${cx}px ${cy}px`;
+
+    const numRays = 8;
+    const innerR = CORNER_RADIUS + 6;
+    const outerR = CORNER_RADIUS + 22;
+    for (let i = 0; i < numRays; i++) {
+      const angle = (i / numRays) * Math.PI * 2;
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', String(cx + Math.cos(angle) * innerR));
+      line.setAttribute('y1', String(cy + Math.sin(angle) * innerR));
+      line.setAttribute('x2', String(cx + Math.cos(angle) * outerR));
+      line.setAttribute('y2', String(cy + Math.sin(angle) * outerR));
+      line.classList.add('exit-ray');
+      raysGroup.appendChild(line);
+    }
+    g.appendChild(raysGroup);
+
+    // Label above
+    const label = document.createElementNS(SVG_NS, 'text');
+    label.setAttribute('x', String(cx));
+    label.setAttribute('y', String(cy - CORNER_RADIUS - 26));
+    label.classList.add('dest-key-label');
+    label.style.textAnchor = 'middle';
+    label.textContent = key ? `[${key}] EXIT` : 'EXIT';
+    g.appendChild(label);
+
+    this.highlightLayer.appendChild(g);
   }
 
   clearHighlights(): void {

@@ -484,7 +484,7 @@ export class GameUI {
     for (let mi = 0; mi < moves.length; mi++) {
       const move = moves[mi];
       let destStr: string;
-      if (pieceId !== -1 && piece?.position === '00' && piece.hasMoved) {
+      if (move.destination === 'EXIT') {
         destStr = 'EXIT';
       } else if (move.destination === '00') {
         destStr = 'GOAL';
