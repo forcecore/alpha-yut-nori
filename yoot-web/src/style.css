@@ -381,6 +381,11 @@ body {
   transition: transform 0.3s ease;
 }
 
+.reserve-piece {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
 .piece-circle {
   stroke: #222;
   stroke-width: 2;
@@ -402,6 +407,15 @@ body {
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
+}
+
+.selection-bracket {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-linecap: square;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.6));
 }
 
 .highlight-ring {
@@ -459,6 +473,83 @@ body {
 
 .stick-tumbling {
   animation: tumble 0.5s ease-out forwards;
+}
+
+/* Capture effect */
+.capture-effect {
+  pointer-events: none;
+  animation: capture-fade 1.2s ease-out forwards;
+}
+
+.capture-ray {
+  stroke: #e94560;
+  stroke-width: 3;
+  opacity: 0;
+  animation: ray-burst 1.2s ease-out forwards;
+}
+
+.capture-glow {
+  fill: none;
+  stroke: #ffeb3b;
+  stroke-width: 4;
+  opacity: 0;
+  animation: glow-expand 1.2s ease-out forwards;
+}
+
+.capture-text {
+  fill: #fff;
+  font-size: 36px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: 0.15em;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px #e94560) drop-shadow(0 0 20px #e94560);
+  animation: text-slam 1.2s ease-out forwards;
+}
+
+.capture-subtext {
+  fill: #ffeb3b;
+  font-size: 18px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: 0.2em;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px #f1c40f);
+  animation: subtext-appear 1.2s ease-out forwards;
+}
+
+@keyframes ray-burst {
+  0% { opacity: 0; stroke-width: 1; }
+  15% { opacity: 0.9; stroke-width: 4; }
+  100% { opacity: 0; stroke-width: 1; transform: scale(1.5); transform-origin: center; }
+}
+
+@keyframes glow-expand {
+  0% { r: 10; opacity: 0; stroke-width: 8; }
+  20% { opacity: 0.8; }
+  100% { r: 100; opacity: 0; stroke-width: 1; }
+}
+
+@keyframes text-slam {
+  0% { opacity: 0; font-size: 60px; }
+  10% { opacity: 1; font-size: 36px; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes subtext-appear {
+  0%, 15% { opacity: 0; }
+  25% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes capture-fade {
+  0% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Responsive */

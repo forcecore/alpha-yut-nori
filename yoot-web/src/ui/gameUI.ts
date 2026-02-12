@@ -202,6 +202,12 @@ export class GameUI {
       }
     });
 
+    this.renderer.onNewPieceClick(() => {
+      if (this.phase === 'selecting_piece') {
+        this.tryEnterNewPiece();
+      }
+    });
+
     this.renderer.onPositionClick((position) => {
       if (this.phase === 'selecting_move' && this.selectedPieceId !== null) {
         // Find moves that land on this destination
@@ -303,6 +309,7 @@ export class GameUI {
 
         if (captured) {
           this.addHistory('Capture! Bonus throw!', true);
+          await this.renderer.showCaptureEffect();
           this.phase = 'throwing';
           this.updateDisplay();
 
@@ -364,7 +371,7 @@ export class GameUI {
 
         if (captured) {
           this.addHistory('Capture! Bonus throw!', true);
-          await this.delay(300);
+          await this.renderer.showCaptureEffect();
           const bonusThrows = this.game.throwPhase(true);
           for (const t of bonusThrows) {
             await this.throwAnim.animate(t);
@@ -444,9 +451,12 @@ export class GameUI {
     const player = this.game.getCurrentPlayer();
     const piece = pieceId === -1 ? null : player.getPieceById(pieceId);
 
-    // Highlight destinations
-    const dests = new Set(moves.map(m => m.destination));
+    // Show selection bracket on chosen piece and highlight destinations
     this.renderer.clearHighlights();
+    if (pieceId !== -1) {
+      this.renderer.selectPiece(player.playerId, pieceId);
+    }
+    const dests = new Set(moves.map(m => m.destination));
     this.renderer.highlightDestinations(dests);
 
     // Show move buttons
@@ -561,7 +571,7 @@ export class GameUI {
     this.updatePlayerStatus();
     this.updateMovesDisplay();
     this.updateHistory();
-    this.renderer.updatePieces(this.game.getAllPieces());
+    this.renderer.updatePieces(this.game.getAllPieces(), this.game.players);
   }
 
   private updatePlayerStatus(): void {

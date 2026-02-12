@@ -93,3 +93,12 @@ export const PLAYER_COLORS_LIGHT = ['#f5a6a6', '#a6d4f5', '#a6f5c4', '#f5e6a6'];
 
 // Key labels for pieces (displayed on board and in UI)
 export const PIECE_KEYS = ['Q', 'W', 'E', 'R'];
+
+// Reserve (home) positions for inactive pieces, outside the board per player
+// stackDir: -1 = stack upward (bottom players), +1 = stack downward (top players)
+export const RESERVE_POSITIONS: { x: number; y: number; stackDir: number }[] = [
+  { x: S - 20, y: S - 20, stackDir: -1 },  // P0: bottom-right
+  { x: S - 20, y: 20, stackDir: 1 },        // P1: top-right
+  { x: 20, y: 20, stackDir: 1 },            // P2: top-left
+  { x: 20, y: S - 20, stackDir: -1 },       // P3: bottom-left
+];

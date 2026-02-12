@@ -1,4 +1,5 @@
 import { Piece } from '../engine/piece';
+import { Player } from '../engine/player';
 import {
   POSITION_COORDS,
   BOARD_EDGES,
@@ -8,6 +9,7 @@ import {
   PIECE_RADIUS,
   PLAYER_COLORS,
   PIECE_KEYS,
+  RESERVE_POSITIONS,
 } from './constants';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -101,13 +103,18 @@ export class BoardRenderer {
     this.staticLayer.appendChild(startLabel);
   }
 
-  updatePieces(allPieces: Piece[]): void {
+  updatePieces(allPieces: Piece[], players?: Player[]): void {
     // Clear piece layer
     while (this.pieceLayer.firstChild) {
       this.pieceLayer.removeChild(this.pieceLayer.firstChild);
     }
 
-    // Group pieces by position and player
+    // Draw reserve (inactive) pieces for each player
+    if (players) {
+      this.drawReserves(players);
+    }
+
+    // Group active pieces by position and player
     const groups = new Map<string, PieceGroup[]>();
 
     for (const piece of allPieces) {
@@ -182,6 +189,59 @@ export class BoardRenderer {
     }
   }
 
+  private drawReserves(players: Player[]): void {
+    const STACK_GAP = 8;
+    const RESERVE_PIECE_RADIUS = 11;
+
+    for (const player of players) {
+      const inactive = player.getInactivePieces();
+      if (inactive.length === 0) continue;
+
+      const base = RESERVE_POSITIONS[player.playerId];
+      if (!base) continue;
+
+      for (let si = 0; si < inactive.length; si++) {
+        const piece = inactive[si];
+        const cx = base.x;
+        const cy = base.y + si * STACK_GAP * base.stackDir;
+
+        const g = document.createElementNS(SVG_NS, 'g');
+        g.classList.add('piece-group', 'reserve-piece');
+        g.style.transform = `translate(${cx}px, ${cy}px)`;
+        g.dataset.playerId = String(player.playerId);
+        g.dataset.pieceId = String(piece.pieceId);
+        g.dataset.reserve = 'true';
+
+        g.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.onNewPieceClickCb?.();
+        });
+
+        const circle = document.createElementNS(SVG_NS, 'circle');
+        circle.setAttribute('cx', '0');
+        circle.setAttribute('cy', '0');
+        circle.setAttribute('r', String(RESERVE_PIECE_RADIUS));
+        circle.classList.add('piece-circle');
+        circle.style.fill = PLAYER_COLORS[player.playerId] ?? '#888';
+        circle.style.opacity = '0.6';
+        g.appendChild(circle);
+
+        // Label on topmost piece only — show "N" (matches hotkey)
+        if (si === inactive.length - 1) {
+          const label = document.createElementNS(SVG_NS, 'text');
+          label.setAttribute('x', '0');
+          label.setAttribute('y', '0');
+          label.classList.add('piece-label');
+          label.style.opacity = '0.8';
+          label.textContent = 'N';
+          g.appendChild(label);
+        }
+
+        this.pieceLayer.appendChild(g);
+      }
+    }
+  }
+
   highlightPieces(playerId: number, pieceIds: Set<number>, hasNewPiece: boolean): void {
     this.clearHighlights();
 
@@ -202,6 +262,33 @@ export class BoardRenderer {
     }
 
     // Highlight new piece option on the side panel (handled by gameUI)
+  }
+
+  selectPiece(playerId: number, pieceId: number): void {
+    // Draw RTS-style [ ] brackets around the selected piece
+    const groups = this.pieceLayer.querySelectorAll('.piece-group');
+    for (const g of groups) {
+      const gEl = g as SVGGElement;
+      if (Number(gEl.dataset.playerId) === playerId && Number(gEl.dataset.pieceId) === pieceId) {
+        const s = PIECE_RADIUS + 6; // half-size of bracket box
+        const corner = 6; // length of bracket arms
+
+        const path = document.createElementNS(SVG_NS, 'path');
+        path.setAttribute('d', [
+          // top-left bracket
+          `M${-s},${-s + corner} L${-s},${-s} L${-s + corner},${-s}`,
+          // top-right bracket
+          `M${s - corner},${-s} L${s},${-s} L${s},${-s + corner}`,
+          // bottom-right bracket
+          `M${s},${s - corner} L${s},${s} L${s - corner},${s}`,
+          // bottom-left bracket
+          `M${-s + corner},${s} L${-s},${s} L${-s},${s - corner}`,
+        ].join(' '));
+        path.classList.add('selection-bracket');
+        gEl.appendChild(path);
+        break;
+      }
+    }
   }
 
   highlightDestinations(positions: Set<string>): void {
@@ -233,10 +320,63 @@ export class BoardRenderer {
     // Restore default layer order: highlight below pieces
     this.svg.insertBefore(this.highlightLayer, this.pieceLayer);
 
-    // Remove highlight rings from piece groups
-    for (const ring of this.pieceLayer.querySelectorAll('.highlight-ring')) {
-      ring.remove();
+    // Remove highlight rings and selection brackets from piece groups
+    for (const el of this.pieceLayer.querySelectorAll('.highlight-ring, .selection-bracket')) {
+      el.remove();
     }
+  }
+
+  showCaptureEffect(): Promise<void> {
+    const cx = 300;
+    const cy = 300;
+
+    const overlay = document.createElementNS(SVG_NS, 'g');
+    overlay.classList.add('capture-effect');
+
+    // Burst rays
+    const numRays = 12;
+    for (let i = 0; i < numRays; i++) {
+      const angle = (i / numRays) * Math.PI * 2;
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', String(cx));
+      line.setAttribute('y1', String(cy));
+      line.setAttribute('x2', String(cx + Math.cos(angle) * 120));
+      line.setAttribute('y2', String(cy + Math.sin(angle) * 120));
+      line.classList.add('capture-ray');
+      overlay.appendChild(line);
+    }
+
+    // Glow circle
+    const glow = document.createElementNS(SVG_NS, 'circle');
+    glow.setAttribute('cx', String(cx));
+    glow.setAttribute('cy', String(cy));
+    glow.setAttribute('r', '60');
+    glow.classList.add('capture-glow');
+    overlay.appendChild(glow);
+
+    // Text
+    const text = document.createElementNS(SVG_NS, 'text');
+    text.setAttribute('x', String(cx));
+    text.setAttribute('y', String(cy - 8));
+    text.classList.add('capture-text');
+    text.textContent = 'CAPTURE!';
+    overlay.appendChild(text);
+
+    const subtext = document.createElementNS(SVG_NS, 'text');
+    subtext.setAttribute('x', String(cx));
+    subtext.setAttribute('y', String(cy + 20));
+    subtext.classList.add('capture-subtext');
+    subtext.textContent = 'BONUS THROW';
+    overlay.appendChild(subtext);
+
+    this.svg.appendChild(overlay);
+
+    return new Promise(resolve => {
+      setTimeout(() => {
+        overlay.remove();
+        resolve();
+      }, 1200);
+    });
   }
 
   onPieceClick(cb: (playerId: number, pieceId: number) => void): void {
