@@ -379,6 +379,64 @@ export class BoardRenderer {
     });
   }
 
+  showGameOverEffect(rankings: { name: string; color: string }[]): void {
+    const cx = 300;
+    const cy = 300;
+
+    const overlay = document.createElementNS(SVG_NS, 'g');
+    overlay.classList.add('gameover-effect');
+
+    // Dark backdrop
+    const backdrop = document.createElementNS(SVG_NS, 'rect');
+    backdrop.setAttribute('x', '0');
+    backdrop.setAttribute('y', '0');
+    backdrop.setAttribute('width', '600');
+    backdrop.setAttribute('height', '600');
+    backdrop.classList.add('gameover-backdrop');
+    overlay.appendChild(backdrop);
+
+    // Burst rays (gold)
+    const numRays = 16;
+    for (let i = 0; i < numRays; i++) {
+      const angle = (i / numRays) * Math.PI * 2;
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', String(cx));
+      line.setAttribute('y1', String(cy - 30));
+      line.setAttribute('x2', String(cx + Math.cos(angle) * 200));
+      line.setAttribute('y2', String(cy - 30 + Math.sin(angle) * 200));
+      line.classList.add('gameover-ray');
+      overlay.appendChild(line);
+    }
+
+    // Title
+    const title = document.createElementNS(SVG_NS, 'text');
+    title.setAttribute('x', String(cx));
+    title.setAttribute('y', String(cy - 100));
+    title.classList.add('gameover-title');
+    title.textContent = 'GAME OVER';
+    overlay.appendChild(title);
+
+    // Rankings — last place gets no medal
+    const allMedals = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
+    for (let i = 0; i < rankings.length; i++) {
+      const r = rankings[i];
+      const isLast = i === rankings.length - 1;
+      const medal = isLast ? '' : (allMedals[i] ?? '');
+      const y = cy - 40 + i * 42;
+
+      const row = document.createElementNS(SVG_NS, 'text');
+      row.setAttribute('x', String(cx));
+      row.setAttribute('y', String(y));
+      row.classList.add('gameover-rank');
+      row.style.fill = r.color;
+      row.style.animationDelay = `${0.3 + i * 0.2}s`;
+      row.textContent = `#${i + 1}  ${medal} ${r.name}`;
+      overlay.appendChild(row);
+    }
+
+    this.svg.appendChild(overlay);
+  }
+
   onPieceClick(cb: (playerId: number, pieceId: number) => void): void {
     this.onPieceClickCb = cb;
   }

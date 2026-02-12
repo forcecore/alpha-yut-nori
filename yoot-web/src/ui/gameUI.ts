@@ -557,13 +557,11 @@ export class GameUI {
     this.phase = 'game_over';
     this.renderer.clearHighlights();
 
-    const rankings = this.game.rankings;
-    let html = '<strong>Game Over!</strong><br>';
-    rankings.forEach((pid, i) => {
-      const name = this.game.players[pid].name;
-      const medal = i === 0 ? ' 🥇' : i === 1 ? ' 🥈' : i === 2 ? ' 🥉' : '';
-      html += `#${i + 1} ${name}${medal}<br>`;
-    });
+    const rankings = this.game.rankings.map(pid => ({
+      name: this.game.players[pid].name,
+      color: PLAYER_COLORS[pid],
+    }));
+    this.renderer.showGameOverEffect(rankings);
 
     this.actionButtons.innerHTML = '';
     const btn = document.createElement('button');
@@ -572,7 +570,7 @@ export class GameUI {
     btn.addEventListener('click', () => this.returnToSetup());
     this.actionButtons.appendChild(btn);
 
-    this.statusMessage.innerHTML = html;
+    this.setStatus('');
   }
 
   private updateDisplay(): void {
