@@ -134,3 +134,4 @@ dmypy.json
 private.json
 
 .omc/
+node_modules/
