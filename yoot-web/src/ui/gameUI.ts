@@ -134,10 +134,10 @@ export class GameUI {
       }
     } else if (this.phase === 'selecting_piece') {
       const pieceKeyMap: Record<string, number> = { q: 0, w: 1, e: 2, r: 3 };
-      const pieceIdx = pieceKeyMap[e.key.toLowerCase()];
-      if (pieceIdx !== undefined) {
+      const pieceId = pieceKeyMap[e.key.toLowerCase()];
+      if (pieceId !== undefined) {
         e.preventDefault();
-        this.trySelectPieceByIndex(pieceIdx);
+        this.trySelectPieceById(pieceId);
       } else if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
         this.tryEnterNewPiece();
@@ -525,11 +525,11 @@ export class GameUI {
     }
   }
 
-  private trySelectPieceByIndex(index: number): void {
-    const player = this.game.getCurrentPlayer();
-    const active = player.getActivePieces();
-    if (index < active.length) {
-      this.selectPiece(active[index].pieceId);
+  private trySelectPieceById(pieceId: number): void {
+    // Check if this pieceId has any legal moves
+    const hasMove = this.currentLegalMoves.some(m => m.pieceId === pieceId);
+    if (hasMove) {
+      this.selectPiece(pieceId);
     }
   }
 
