@@ -205,6 +205,9 @@ export class BoardRenderer {
   }
 
   highlightDestinations(positions: Set<string>): void {
+    // Move highlight layer above pieces so destination clicks take priority
+    this.svg.appendChild(this.highlightLayer);
+
     for (const pos of positions) {
       const coord = POSITION_COORDS[pos];
       if (!coord) continue;
@@ -227,6 +230,9 @@ export class BoardRenderer {
     while (this.highlightLayer.firstChild) {
       this.highlightLayer.removeChild(this.highlightLayer.firstChild);
     }
+    // Restore default layer order: highlight below pieces
+    this.svg.insertBefore(this.highlightLayer, this.pieceLayer);
+
     // Remove highlight rings from piece groups
     for (const ring of this.pieceLayer.querySelectorAll('.highlight-ring')) {
       ring.remove();
