@@ -61,7 +61,7 @@ export class GameUI {
   private setupPlayerConfigUI(): void {
     const countSelect = document.getElementById('player-count') as HTMLSelectElement;
     const configsDiv = document.getElementById('player-configs')!;
-    const defaultNames = ['Alice', 'Bob', 'Charlie', 'Diana'];
+    const defaultNames = ['BTC', 'DOGE', 'ETH', 'SOL'];
 
     const renderConfigs = () => {
       const count = Number(countSelect.value);
