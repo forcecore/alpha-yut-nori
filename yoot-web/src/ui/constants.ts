@@ -90,3 +90,6 @@ export const PIECE_RADIUS = 13;
 
 export const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f'];
 export const PLAYER_COLORS_LIGHT = ['#f5a6a6', '#a6d4f5', '#a6f5c4', '#f5e6a6'];
+
+// Key labels for pieces (displayed on board and in UI)
+export const PIECE_KEYS = ['Q', 'W', 'E', 'R'];

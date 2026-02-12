@@ -7,6 +7,7 @@ import {
   CORNER_RADIUS,
   PIECE_RADIUS,
   PLAYER_COLORS,
+  PIECE_KEYS,
 } from './constants';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -128,50 +129,55 @@ export class BoardRenderer {
       const coord = POSITION_COORDS[position];
       if (!coord) continue;
 
-      // Offset multiple player groups at same position
+      // Offset multiple player groups at same position (x-offset between players)
       const numGroups = posGroups.length;
       posGroups.forEach((group, gi) => {
-        const offset = numGroups > 1
-          ? { x: (gi - (numGroups - 1) / 2) * 18, y: 0 }
-          : { x: 0, y: 0 };
-        const cx = coord.x + offset.x;
-        const cy = coord.y + offset.y;
+        const groupOffsetX = numGroups > 1
+          ? (gi - (numGroups - 1) / 2) * 28
+          : 0;
 
-        const g = document.createElementNS(SVG_NS, 'g');
-        g.classList.add('piece-group');
-        g.style.transform = `translate(${cx}px, ${cy}px)`;
-        g.dataset.playerId = String(group.playerId);
-        g.dataset.pieceId = String(group.pieces[0].pieceId);
-        g.dataset.position = position;
+        // Draw each piece in the stack with a y-offset so they look stacked
+        const stackSize = group.pieces.length;
+        const STACK_OFFSET_Y = -8; // pixels between stacked pieces
 
-        g.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.onPieceClickCb?.(group.playerId, group.pieces[0].pieceId);
-        });
+        for (let si = 0; si < stackSize; si++) {
+          const piece = group.pieces[si];
+          const cx = coord.x + groupOffsetX;
+          const cy = coord.y + si * STACK_OFFSET_Y;
 
-        // Circle
-        const circle = document.createElementNS(SVG_NS, 'circle');
-        circle.setAttribute('cx', '0');
-        circle.setAttribute('cy', '0');
-        circle.setAttribute('r', String(PIECE_RADIUS));
-        circle.classList.add('piece-circle');
-        circle.style.fill = PLAYER_COLORS[group.playerId] ?? '#888';
-        g.appendChild(circle);
+          const g = document.createElementNS(SVG_NS, 'g');
+          g.classList.add('piece-group');
+          g.style.transform = `translate(${cx}px, ${cy}px)`;
+          g.dataset.playerId = String(group.playerId);
+          g.dataset.pieceId = String(piece.pieceId);
+          g.dataset.position = position;
 
-        // Label
-        const label = document.createElementNS(SVG_NS, 'text');
-        label.setAttribute('x', '0');
-        label.setAttribute('y', '0');
-        label.classList.add('piece-label');
+          g.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.onPieceClickCb?.(group.playerId, group.pieces[0].pieceId);
+          });
 
-        if (group.pieces.length > 1) {
-          label.textContent = `x${group.pieces.length}`;
-        } else {
-          label.textContent = String(group.pieces[0].pieceId);
+          // Circle
+          const circle = document.createElementNS(SVG_NS, 'circle');
+          circle.setAttribute('cx', '0');
+          circle.setAttribute('cy', '0');
+          circle.setAttribute('r', String(PIECE_RADIUS));
+          circle.classList.add('piece-circle');
+          circle.style.fill = PLAYER_COLORS[group.playerId] ?? '#888';
+          g.appendChild(circle);
+
+          // Label on topmost piece only
+          if (si === stackSize - 1) {
+            const label = document.createElementNS(SVG_NS, 'text');
+            label.setAttribute('x', '0');
+            label.setAttribute('y', '0');
+            label.classList.add('piece-label');
+            label.textContent = PIECE_KEYS[piece.pieceId] ?? String(piece.pieceId);
+            g.appendChild(label);
+          }
+
+          this.pieceLayer.appendChild(g);
         }
-
-        g.appendChild(label);
-        this.pieceLayer.appendChild(g);
       });
     }
   }
@@ -209,6 +215,10 @@ export class BoardRenderer {
       circle.setAttribute('r', String(CORNER_RADIUS));
       circle.classList.add('dest-highlight');
       circle.dataset.destPosition = pos;
+      circle.style.cursor = 'pointer';
+      circle.addEventListener('click', () => {
+        this.onPositionClickCb?.(pos);
+      });
       this.highlightLayer.appendChild(circle);
     }
   }

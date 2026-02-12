@@ -444,6 +444,12 @@ body {
   stroke-width: 1.5;
 }
 
+.stick-x-mark line {
+  stroke: #2a1508;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
 @keyframes tumble {
   0% { transform: translateY(0) rotate(0deg); opacity: 0; }
   20% { opacity: 1; }

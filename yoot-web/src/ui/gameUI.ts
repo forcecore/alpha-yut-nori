@@ -7,7 +7,7 @@ import { RandomController } from '../controller/randomController';
 import { MonteCarloController } from '../controller/mcController';
 import type { PlayerController, ControllerType } from '../controller/controller';
 import type { LegalMove, ThrowResult } from '../engine/types';
-import { PLAYER_COLORS } from './constants';
+import { PLAYER_COLORS, PIECE_KEYS } from './constants';
 
 type Phase = 'setup' | 'throwing' | 'selecting_piece' | 'selecting_move' | 'animating' | 'game_over';
 
@@ -123,9 +123,10 @@ export class GameUI {
         this.performThrow();
       }
     } else if (this.phase === 'selecting_piece') {
-      if (e.key >= '1' && e.key <= '4') {
+      const pieceKeyMap: Record<string, number> = { q: 0, w: 1, e: 2, r: 3 };
+      const pieceIdx = pieceKeyMap[e.key.toLowerCase()];
+      if (pieceIdx !== undefined) {
         e.preventDefault();
-        const pieceIdx = Number(e.key) - 1;
         this.trySelectPieceByIndex(pieceIdx);
       } else if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
@@ -139,13 +140,14 @@ export class GameUI {
         e.preventDefault();
         this.backToPieceSelection();
       }
-      // Number keys to select move values
-      if (e.key >= '1' && e.key <= '5') {
+      // QWER to select move values
+      const moveKeyMap: Record<string, number> = { q: 0, w: 1, e: 2, r: 3 };
+      const moveIdx = moveKeyMap[e.key.toLowerCase()];
+      if (moveIdx !== undefined) {
         const moveButtons = this.actionButtons.querySelectorAll('.btn-move') as NodeListOf<HTMLButtonElement>;
-        const idx = Number(e.key) - 1;
-        if (idx < moveButtons.length) {
+        if (moveIdx < moveButtons.length) {
           e.preventDefault();
-          moveButtons[idx].click();
+          moveButtons[moveIdx].click();
         }
       }
     }
@@ -202,10 +204,10 @@ export class GameUI {
 
     this.renderer.onPositionClick((position) => {
       if (this.phase === 'selecting_move' && this.selectedPieceId !== null) {
-        // Find a move that matches this destination
+        // Find moves that land on this destination
         const matchingMoves = this.getMovesForPiece(this.selectedPieceId)
           .filter(m => m.destination === position);
-        if (matchingMoves.length === 1) {
+        if (matchingMoves.length > 0) {
           this.executeMove(matchingMoves[0].pieceId, matchingMoves[0].steps);
         }
       }
@@ -233,7 +235,9 @@ export class GameUI {
     } else {
       this.setStatus(`${player.name} (AI) is throwing...`);
       this.clearActions();
-      await this.delay(400);
+      await this.delay(300);
+      // AI uses performThrow too so animation plays
+      this.phase = 'throwing';
       await this.performThrow();
     }
   }
@@ -361,7 +365,11 @@ export class GameUI {
         if (captured) {
           this.addHistory('Capture! Bonus throw!', true);
           await this.delay(300);
-          this.game.throwPhase(true);
+          const bonusThrows = this.game.throwPhase(true);
+          for (const t of bonusThrows) {
+            await this.throwAnim.animate(t);
+          }
+          this.throwAnim.hide();
           this.updateDisplay();
         }
 
@@ -444,7 +452,8 @@ export class GameUI {
     // Show move buttons
     this.actionButtons.innerHTML = '';
 
-    for (const move of moves) {
+    for (let mi = 0; mi < moves.length; mi++) {
+      const move = moves[mi];
       let destStr: string;
       if (pieceId !== -1 && piece?.position === '00' && piece.hasMoved) {
         destStr = 'EXIT';
@@ -457,9 +466,10 @@ export class GameUI {
         }
       }
 
+      const keyHint = PIECE_KEYS[mi] ?? '';
       const btn = document.createElement('button');
       btn.className = 'btn btn-move';
-      btn.textContent = `${move.steps} → ${destStr}`;
+      btn.textContent = `[${keyHint}] ${move.steps} → ${destStr}`;
       btn.addEventListener('click', () => this.executeMove(move.pieceId, move.steps));
       this.actionButtons.appendChild(btn);
     }
@@ -470,7 +480,7 @@ export class GameUI {
     backBtn.addEventListener('click', () => this.backToPieceSelection());
     this.actionButtons.appendChild(backBtn);
 
-    const label = pieceId === -1 ? 'new piece' : `Piece ${pieceId}`;
+    const label = pieceId === -1 ? 'new piece' : `Piece ${PIECE_KEYS[pieceId] ?? pieceId}`;
     this.setStatus(`${player.name} — choose move for ${label}`);
   }
 

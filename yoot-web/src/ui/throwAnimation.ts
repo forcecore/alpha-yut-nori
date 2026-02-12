@@ -32,20 +32,47 @@ export class ThrowAnimation {
     for (let i = 0; i < 4; i++) {
       const x = startX + i * (stickWidth + gap);
       const y = 25;
+      const isFlat = result.sticks[i];
 
+      const g = document.createElementNS(SVG_NS, 'g');
+      g.style.animationDelay = `${i * 0.1}s`;
+      g.classList.add('stick-tumbling');
+
+      // Stick body
       const rect = document.createElementNS(SVG_NS, 'rect');
       rect.setAttribute('x', String(x));
       rect.setAttribute('y', String(y));
       rect.setAttribute('width', String(stickWidth));
       rect.setAttribute('height', String(stickHeight));
       rect.classList.add('yut-stick');
-      rect.classList.add(result.sticks[i] ? 'flat' : 'round');
+      rect.classList.add(isFlat ? 'flat' : 'round');
+      g.appendChild(rect);
 
-      // Stagger the animation
-      rect.style.animationDelay = `${i * 0.1}s`;
-      rect.classList.add('stick-tumbling');
+      // Round side: draw 3 X marks
+      if (!isFlat) {
+        const cx = x + stickWidth / 2;
+        const xSize = 4;
+        const positions = [y + 17, y + 35, y + 53]; // top, mid, bottom
+        for (const py of positions) {
+          const cross = document.createElementNS(SVG_NS, 'g');
+          cross.classList.add('stick-x-mark');
+          const l1 = document.createElementNS(SVG_NS, 'line');
+          l1.setAttribute('x1', String(cx - xSize));
+          l1.setAttribute('y1', String(py - xSize));
+          l1.setAttribute('x2', String(cx + xSize));
+          l1.setAttribute('y2', String(py + xSize));
+          const l2 = document.createElementNS(SVG_NS, 'line');
+          l2.setAttribute('x1', String(cx + xSize));
+          l2.setAttribute('y1', String(py - xSize));
+          l2.setAttribute('x2', String(cx - xSize));
+          l2.setAttribute('y2', String(py + xSize));
+          cross.appendChild(l1);
+          cross.appendChild(l2);
+          g.appendChild(cross);
+        }
+      }
 
-      this.throwSvg.appendChild(rect);
+      this.throwSvg.appendChild(g);
     }
 
     // Wait for animation to complete
