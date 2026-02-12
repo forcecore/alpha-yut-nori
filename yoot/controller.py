@@ -146,7 +146,7 @@ class MonteCarloController(PlayerController):
 
     MAX_ROLLOUT_TURNS = 200
 
-    def __init__(self, game, player_id, num_simulations=3000):
+    def __init__(self, game, player_id, num_simulations=100):
         self.game = game
         self.player_id = player_id
         self.num_simulations = num_simulations
