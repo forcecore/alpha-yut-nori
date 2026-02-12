@@ -89,6 +89,10 @@ export class GameUI {
     countSelect.addEventListener('change', renderConfigs);
     renderConfigs();
 
+    // Pre-check fast mode if ?fast is in the URL
+    const fastCheckbox = document.getElementById('fast-mode') as HTMLInputElement;
+    if (this.fast) fastCheckbox.checked = true;
+
     document.getElementById('start-btn')!.addEventListener('click', () => {
       const count = Number(countSelect.value);
       const configs: PlayerConfig[] = [];
@@ -100,6 +104,7 @@ export class GameUI {
           type: typeSelect.value as ControllerType,
         });
       }
+      this.fast = fastCheckbox.checked;
       this.startGame(configs);
     });
   }
