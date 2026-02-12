@@ -4,25 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Yut Nori (윷놀이) — a Python implementation of the traditional Korean board game. Includes a game engine, CLI interface, and AI controllers (random + Monte Carlo simulation).
+Yut Nori (윷놀이) — a traditional Korean board game with two implementations:
+
+1. **Python CLI** (`yoot/` + `cli_game.py`) — original engine with text-based interface
+2. **TypeScript Web** (`yoot-web/`) — browser GUI with SVG board, click-to-play, and AI opponents
 
 ## Commands
 
-```bash
-# Play the game
-python3 cli_game.py
+### Python CLI
 
-# Run tests
-pytest                      # runs tests/ directory (configured in pytest.ini)
-pytest tests/test_board.py  # single file
-pytest -k test_name         # single test by name
+```bash
+python3 cli_game.py                 # play the game
+pytest                              # run tests (configured in pytest.ini)
+pytest tests/test_board.py          # single file
+pytest -k test_name                 # single test by name
 ```
 
 No build step. No external dependencies for the game itself; only `pytest` for testing.
 
+### TypeScript Web (`yoot-web/`)
+
+```bash
+cd yoot-web
+pnpm install                        # install dependencies (uses pnpm, not npm)
+pnpm dev                            # dev server with hot reload (http://localhost:5173)
+pnpm build                          # type-check + production build → dist/
+pnpm preview                        # preview production build locally
+```
+
+Add `?fast` to the URL (e.g. `http://localhost:5173/?fast`) to skip animations for quick debugging. There is also a "Fast mode" checkbox on the setup screen.
+
 ## Architecture
 
-### Core engine (`yoot/` package)
+### Web app (`yoot-web/`)
+
+Vanilla TypeScript + Vite, no framework. All client-side, served from GitHub Pages (`base: '/yoot/'`).
+
+- **`src/engine/`** — 1:1 port of the Python engine (board, piece, player, yutThrow, game). Same position system, same move tables. `game.clone()` for MC simulations (shares Board, clones players).
+- **`src/controller/`** — `PlayerController` interface (async). `HumanController` (Promise resolved by UI clicks), `RandomController` ("AI Easy"), `MonteCarloController` ("AlphaYutNori", 100 rollouts).
+- **`src/ui/gameUI.ts`** — Event-driven state machine: setup → throwing → selecting_piece → selecting_move → animating → game_over. Manages all DOM updates, keyboard shortcuts (QWER for pieces, N for new piece, Space to throw, 0 to skip).
+- **`src/ui/boardRenderer.ts`** — SVG 600x600 board. Three layers: static (lines/nodes), highlight (destination glow, exit indicator), piece (active + reserve). Layer order swaps during destination selection for click priority.
+- **`src/ui/throwAnimation.ts`** — Yut stick throw animation with tumble effect. Flat sticks are light, round sticks are dark with X marks.
+- **`src/ui/constants.ts`** — Position coordinates, board edges, player colors, PIECE_KEYS (`['Q','W','E','R']`), reserve positions with stack direction.
+- **`src/style.css`** — Dark theme, responsive layout, SVG animations (capture burst, game over rays, exit indicator spin).
+
+### Core engine (`yoot/` package — Python)
 
 - **board.py** — Stateless board with 29 positions. All movement is a dictionary lookup (`MOVE_TABLE[pos][steps]`). Backward moves use `BACK_TABLE`. Loads `cells.txt` at project root for ASCII rendering.
 - **piece.py** — Single piece (말). Tracks `position` (str or None), `is_active`, `has_moved`. The `has_moved` flag distinguishes "at start" from "returned to 00 to finish".
