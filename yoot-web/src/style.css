@@ -434,6 +434,16 @@ body {
   animation: pulse 1s ease-in-out infinite;
 }
 
+.dest-key-label {
+  fill: #ffeb3b;
+  font-size: 14px;
+  font-weight: 900;
+  text-anchor: start;
+  dominant-baseline: central;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(0,0,0,0.8));
+}
+
 .dest-highlight {
   fill: rgba(255, 235, 59, 0.3);
   stroke: #ffeb3b;

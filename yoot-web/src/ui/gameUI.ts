@@ -469,8 +469,14 @@ export class GameUI {
     if (pieceId !== -1) {
       this.renderer.selectPiece(player.playerId, pieceId);
     }
-    const dests = new Set(moves.map(m => m.destination));
-    this.renderer.highlightDestinations(dests);
+    const destKeys = new Map<string, string>();
+    for (let mi = 0; mi < moves.length; mi++) {
+      const key = PIECE_KEYS[mi] ?? '';
+      if (!destKeys.has(moves[mi].destination)) {
+        destKeys.set(moves[mi].destination, key);
+      }
+    }
+    this.renderer.highlightDestinations(destKeys);
 
     // Show move buttons
     this.actionButtons.innerHTML = '';

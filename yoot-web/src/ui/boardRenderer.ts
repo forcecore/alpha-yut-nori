@@ -291,13 +291,19 @@ export class BoardRenderer {
     }
   }
 
-  highlightDestinations(positions: Set<string>): void {
+  highlightDestinations(destKeys: Map<string, string>): void {
     // Move highlight layer above pieces so destination clicks take priority
     this.svg.appendChild(this.highlightLayer);
 
-    for (const pos of positions) {
+    for (const [pos, key] of destKeys) {
       const coord = POSITION_COORDS[pos];
       if (!coord) continue;
+
+      const g = document.createElementNS(SVG_NS, 'g');
+      g.style.cursor = 'pointer';
+      g.addEventListener('click', () => {
+        this.onPositionClickCb?.(pos);
+      });
 
       const circle = document.createElementNS(SVG_NS, 'circle');
       circle.setAttribute('cx', String(coord.x));
@@ -305,11 +311,19 @@ export class BoardRenderer {
       circle.setAttribute('r', String(CORNER_RADIUS));
       circle.classList.add('dest-highlight');
       circle.dataset.destPosition = pos;
-      circle.style.cursor = 'pointer';
-      circle.addEventListener('click', () => {
-        this.onPositionClickCb?.(pos);
-      });
-      this.highlightLayer.appendChild(circle);
+      g.appendChild(circle);
+
+      // Key label
+      if (key) {
+        const label = document.createElementNS(SVG_NS, 'text');
+        label.setAttribute('x', String(coord.x + CORNER_RADIUS + 8));
+        label.setAttribute('y', String(coord.y));
+        label.classList.add('dest-key-label');
+        label.textContent = key;
+        g.appendChild(label);
+      }
+
+      this.highlightLayer.appendChild(g);
     }
   }
 
