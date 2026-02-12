@@ -1,4 +1,5 @@
 import { GameUI } from './ui/gameUI';
 
-const gameUI = new GameUI();
+const fast = new URLSearchParams(window.location.search).has('fast');
+const gameUI = new GameUI(fast);
 gameUI.init();

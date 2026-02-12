@@ -23,11 +23,16 @@ export class GameUI {
   private controllers: PlayerController[] = [];
   private controllerTypes: ControllerType[] = [];
   private phase: Phase = 'setup';
+  private fast: boolean;
 
   // Selection state
   private selectedPieceId: number | null = null;
   private currentLegalMoves: LegalMove[] = [];
   private currentThrows: ThrowResult[] = [];
+
+  constructor(fast = false) {
+    this.fast = fast;
+  }
 
   // DOM elements
   private setupOverlay!: HTMLElement;
@@ -266,10 +271,12 @@ export class GameUI {
     this.currentThrows = throws;
 
     // Animate each throw
-    for (const t of throws) {
-      await this.throwAnim.animate(t);
+    if (!this.fast) {
+      for (const t of throws) {
+        await this.throwAnim.animate(t);
+      }
+      this.throwAnim.hide();
     }
-    this.throwAnim.hide();
 
     this.updateDisplay();
     await this.startMovePhase();
@@ -309,7 +316,7 @@ export class GameUI {
 
         if (captured) {
           this.addHistory('Capture! Bonus throw!', true);
-          await this.renderer.showCaptureEffect();
+          if (!this.fast) await this.renderer.showCaptureEffect();
           this.phase = 'throwing';
           this.updateDisplay();
 
@@ -317,8 +324,6 @@ export class GameUI {
           if (isHuman) {
             this.showThrowButton();
             // Wait for the human to throw
-            const humanCtrl = this.controllers[playerId] as HumanController;
-            // We need to go back to throwing phase
             await new Promise<void>(resolve => {
               const origPerformThrow = this.performThrow.bind(this);
               this.performThrow = async () => {
@@ -328,16 +333,17 @@ export class GameUI {
                 this.clearActions();
 
                 const bonusThrows = this.game.throwPhase(true);
-                for (const t of bonusThrows) {
-                  await this.throwAnim.animate(t);
+                if (!this.fast) {
+                  for (const t of bonusThrows) {
+                    await this.throwAnim.animate(t);
+                  }
+                  this.throwAnim.hide();
                 }
-                this.throwAnim.hide();
                 this.updateDisplay();
                 resolve();
               };
             });
           } else {
-            await this.delay(400);
             this.game.throwPhase(true);
             this.updateDisplay();
           }
@@ -371,12 +377,14 @@ export class GameUI {
 
         if (captured) {
           this.addHistory('Capture! Bonus throw!', true);
-          await this.renderer.showCaptureEffect();
+          if (!this.fast) await this.renderer.showCaptureEffect();
           const bonusThrows = this.game.throwPhase(true);
-          for (const t of bonusThrows) {
-            await this.throwAnim.animate(t);
+          if (!this.fast) {
+            for (const t of bonusThrows) {
+              await this.throwAnim.animate(t);
+            }
+            this.throwAnim.hide();
           }
-          this.throwAnim.hide();
           this.updateDisplay();
         }
 
@@ -636,6 +644,7 @@ export class GameUI {
   }
 
   private delay(ms: number): Promise<void> {
+    if (this.fast) ms = Math.min(ms, 50);
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
