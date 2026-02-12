@@ -103,7 +103,7 @@ export class BoardRenderer {
     this.staticLayer.appendChild(startLabel);
   }
 
-  updatePieces(allPieces: Piece[], players?: Player[]): void {
+  updatePieces(allPieces: Piece[], players?: Player[], currentPlayerId?: number): void {
     // Clear piece layer
     while (this.pieceLayer.firstChild) {
       this.pieceLayer.removeChild(this.pieceLayer.firstChild);
@@ -111,7 +111,7 @@ export class BoardRenderer {
 
     // Draw reserve (inactive) pieces for each player
     if (players) {
-      this.drawReserves(players);
+      this.drawReserves(players, currentPlayerId);
     }
 
     // Group active pieces by position and player
@@ -173,8 +173,8 @@ export class BoardRenderer {
           circle.style.fill = PLAYER_COLORS[group.playerId] ?? '#888';
           g.appendChild(circle);
 
-          // Label on topmost piece only
-          if (si === stackSize - 1) {
+          // Label on topmost piece only, shown only for current player
+          if (si === stackSize - 1 && group.playerId === currentPlayerId) {
             const label = document.createElementNS(SVG_NS, 'text');
             label.setAttribute('x', '0');
             label.setAttribute('y', '0');
@@ -189,7 +189,7 @@ export class BoardRenderer {
     }
   }
 
-  private drawReserves(players: Player[]): void {
+  private drawReserves(players: Player[], currentPlayerId?: number): void {
     const STACK_GAP = 8;
     const RESERVE_PIECE_RADIUS = 11;
 
@@ -226,8 +226,8 @@ export class BoardRenderer {
         circle.style.opacity = '0.6';
         g.appendChild(circle);
 
-        // Label on topmost piece only — show "N" (matches hotkey)
-        if (si === inactive.length - 1) {
+        // Label on topmost piece only, shown only for current player
+        if (si === inactive.length - 1 && player.playerId === currentPlayerId) {
           const label = document.createElementNS(SVG_NS, 'text');
           label.setAttribute('x', '0');
           label.setAttribute('y', '0');

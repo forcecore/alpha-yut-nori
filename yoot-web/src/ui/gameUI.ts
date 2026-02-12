@@ -588,7 +588,7 @@ export class GameUI {
     this.updatePlayerStatus();
     this.updateMovesDisplay();
     this.updateHistory();
-    this.renderer.updatePieces(this.game.getAllPieces(), this.game.players);
+    this.renderer.updatePieces(this.game.getAllPieces(), this.game.players, this.game.currentPlayerIdx);
   }
 
   private updatePlayerStatus(): void {
