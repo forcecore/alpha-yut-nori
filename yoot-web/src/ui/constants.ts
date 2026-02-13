@@ -94,6 +94,13 @@ export const PLAYER_COLORS_LIGHT = ['#f5a6a6', '#a6d4f5', '#a6f5c4', '#f5e6a6'];
 // Key labels for pieces (displayed on board and in UI)
 export const PIECE_KEYS = ['Q', 'W', 'E', 'R'];
 
+export const DEFAULT_PLAYER_NAMES = [
+  'Satoshi Nakamoto BTC',
+  'Vitalik Buterin ETH',
+  'Billy Markus DOGE',
+  'Sam Altman WLD',
+];
+
 // Reserve (home) positions for inactive pieces, outside the board per player
 // stackDir: -1 = stack upward (bottom players), +1 = stack downward (top players)
 export const RESERVE_POSITIONS: { x: number; y: number; stackDir: number }[] = [

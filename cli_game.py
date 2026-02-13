@@ -6,6 +6,7 @@ CLI interface for playing Yut Nori.
 import os
 from typing import Optional
 from yoot import YutGame, PlayerController, HumanController, RandomController, MonteCarloController, MCTSController
+from yoot.config import DEFAULT_PLAYER_NAMES
 
 
 def clear_screen():
@@ -122,9 +123,10 @@ def get_player_names() -> tuple[list[str], int]:
 
     names = []
     for i in range(num_players):
-        name = input(f"Player {i} name (default: Player {i}): ").strip()
+        default = DEFAULT_PLAYER_NAMES[i] if i < len(DEFAULT_PLAYER_NAMES) else f"Player {i}"
+        name = input(f"Player {i} name (default: {default}): ").strip()
         if not name:
-            name = f"Player {i}"
+            name = default
         names.append(name)
 
     return names, num_players

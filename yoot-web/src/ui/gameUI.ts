@@ -8,7 +8,7 @@ import { MonteCarloController } from '../controller/mcController';
 import { MCTSController } from '../controller/mctsController';
 import type { PlayerController, ControllerType } from '../controller/controller';
 import type { LegalMove, ThrowResult } from '../engine/types';
-import { PLAYER_COLORS, PIECE_KEYS } from './constants';
+import { PLAYER_COLORS, PIECE_KEYS, DEFAULT_PLAYER_NAMES } from './constants';
 
 type Phase = 'setup' | 'throwing' | 'selecting_piece' | 'selecting_move' | 'animating' | 'game_over';
 
@@ -62,7 +62,7 @@ export class GameUI {
   private setupPlayerConfigUI(): void {
     const countSelect = document.getElementById('player-count') as HTMLSelectElement;
     const configsDiv = document.getElementById('player-configs')!;
-    const defaultNames = ['BTC', 'DOGE', 'ETH', 'SOL'];
+    const defaultNames = DEFAULT_PLAYER_NAMES;
 
     const renderConfigs = () => {
       const count = Number(countSelect.value);
