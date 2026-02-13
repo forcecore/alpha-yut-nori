@@ -68,13 +68,24 @@ export class Board {
     pp: ['cc'], qq: ['pp'],
   };
 
-  getNextPosition(currentPos: string, steps: number): string | null {
+  getNextPosition(currentPos: string, steps: number, allowOvershoot = false): string | null {
     if (steps === 0) return currentPos;
     if (steps === -1) {
       const dests = Board.BACK_DO[currentPos];
       return dests?.[0] ?? null;
     }
-    return Board.MOVE_TABLE[currentPos]?.[steps] ?? null;
+    const dest = Board.MOVE_TABLE[currentPos]?.[steps] ?? null;
+    if (dest !== null) return dest;
+
+    // Non-exact landing: if this position can reach 00 with a smaller step,
+    // a larger step overshoots past 00 — land on 00 instead.
+    if (allowOvershoot) {
+      const entries = Board.MOVE_TABLE[currentPos];
+      if (entries && Object.values(entries).includes('00')) {
+        return '00';
+      }
+    }
+    return null;
   }
 
   getBackDoDestinations(currentPos: string): string[] {

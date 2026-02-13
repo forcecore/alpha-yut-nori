@@ -14,8 +14,9 @@ export class YutGame {
   rankings: number[];
   accumulatedMoves: number[];
   moveHistory: string[];
+  mustLandExactly: boolean;
 
-  constructor(playerNames?: string[], numPlayers = 4) {
+  constructor(playerNames?: string[], numPlayers = 4, mustLandExactly = false) {
     if (numPlayers < 2 || numPlayers > 6) {
       throw new Error('Number of players must be between 2 and 6');
     }
@@ -34,6 +35,7 @@ export class YutGame {
     this.rankings = [];
     this.accumulatedMoves = [];
     this.moveHistory = [];
+    this.mustLandExactly = mustLandExactly;
   }
 
   getCurrentPlayer(): Player {
@@ -87,7 +89,7 @@ export class YutGame {
             moves.push({ pieceId: piece.pieceId, steps, destination: dest });
           }
         } else {
-          const dest = this.board.getNextPosition(piece.position!, steps);
+          const dest = this.board.getNextPosition(piece.position!, steps, !this.mustLandExactly);
           if (dest !== null) {
             moves.push({ pieceId: piece.pieceId, steps, destination: dest });
           }
@@ -165,7 +167,7 @@ export class YutGame {
       if (!valid.includes(destination)) return { success: false, captured: false };
       newPos = destination;
     } else {
-      newPos = this.board.getNextPosition(currentPos, steps);
+      newPos = this.board.getNextPosition(currentPos, steps, !this.mustLandExactly);
     }
     if (newPos === null) return { success: false, captured: false };
 
@@ -300,6 +302,7 @@ export class YutGame {
     game.rankings = [...this.rankings];
     game.accumulatedMoves = [...this.accumulatedMoves];
     game.moveHistory = []; // don't clone history for simulations
+    game.mustLandExactly = this.mustLandExactly;
     return game;
   }
 

@@ -25,6 +25,7 @@ export class GameUI {
   private controllerTypes: ControllerType[] = [];
   private phase: Phase = 'setup';
   private fast: boolean;
+  private mustLandExactly = false;
 
   // Selection state
   private selectedPieceId: number | null = null;
@@ -95,6 +96,8 @@ export class GameUI {
     const fastCheckbox = document.getElementById('fast-mode') as HTMLInputElement;
     if (this.fast) fastCheckbox.checked = true;
 
+    const exactLandingCheckbox = document.getElementById('exact-landing') as HTMLInputElement;
+
     document.getElementById('start-btn')!.addEventListener('click', () => {
       const count = Number(countSelect.value);
       const configs: PlayerConfig[] = [];
@@ -107,6 +110,7 @@ export class GameUI {
         });
       }
       this.fast = fastCheckbox.checked;
+      this.mustLandExactly = exactLandingCheckbox.checked;
       this.startGame(configs);
     });
   }
@@ -177,7 +181,7 @@ export class GameUI {
 
   private startGame(configs: PlayerConfig[]): void {
     const names = configs.map(c => c.name);
-    this.game = new YutGame(names, configs.length);
+    this.game = new YutGame(names, configs.length, this.mustLandExactly);
 
     // Create controllers
     this.controllers = [];
