@@ -1,3 +1,5 @@
+export const REVISION = 2;
+
 // Board layout in a 600x600 SVG viewBox
 // Traditional Yut board: square outer path with two crossing diagonals
 

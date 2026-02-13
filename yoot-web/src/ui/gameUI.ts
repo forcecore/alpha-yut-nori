@@ -8,7 +8,7 @@ import { MonteCarloController } from '../controller/mcController';
 import { MCTSController } from '../controller/mctsController';
 import type { PlayerController, ControllerType } from '../controller/controller';
 import type { LegalMove, ThrowResult } from '../engine/types';
-import { PLAYER_COLORS, PIECE_KEYS, DEFAULT_PLAYER_NAMES } from './constants';
+import { PLAYER_COLORS, PIECE_KEYS, DEFAULT_PLAYER_NAMES, REVISION } from './constants';
 
 type Phase = 'setup' | 'throwing' | 'selecting_piece' | 'selecting_move' | 'animating' | 'game_over';
 
@@ -55,6 +55,8 @@ export class GameUI {
     this.historyLog = document.getElementById('history-log')!;
     this.actionButtons = document.getElementById('action-buttons')!;
     this.statusMessage = document.getElementById('status-message')!;
+
+    document.getElementById('revision')!.textContent = `rev ${REVISION}`;
 
     this.setupPlayerConfigUI();
     this.setupEventListeners();

@@ -64,6 +64,12 @@ body {
   font-weight: normal;
 }
 
+.revision {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+}
+
 .setup-form {
   display: flex;
   flex-direction: column;
