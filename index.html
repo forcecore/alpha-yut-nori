@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Yut Nori (윷놀이)</title>
-  <script type="module" crossorigin src="/alpha-yut-nori/assets/index-LUXpMe5i.js"></script>
-  <link rel="stylesheet" crossorigin href="/alpha-yut-nori/assets/index-DyklaPLV.css">
+  <script type="module" crossorigin src="/alpha-yut-nori/assets/index-DuBAQDHM.js"></script>
+  <link rel="stylesheet" crossorigin href="/alpha-yut-nori/assets/index-BxGY5gvL.css">
 </head>
 <body>
   <div id="app">
@@ -13,6 +13,7 @@
     <div id="setup-overlay" class="overlay">
       <div class="setup-panel">
         <h1>윷놀이 <span class="subtitle">Yut Nori</span></h1>
+        <div id="revision" class="revision"></div>
         <div class="setup-form">
           <label>
             Players
@@ -23,6 +24,9 @@
             </select>
           </label>
           <div id="player-configs"></div>
+          <label class="checkbox-label">
+            <input type="checkbox" id="exact-landing" /> Must land exactly on goal
+          </label>
           <label class="checkbox-label">
             <input type="checkbox" id="fast-mode" /> Fast mode (skip animations)
           </label>
