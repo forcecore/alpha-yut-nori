@@ -193,10 +193,27 @@ Movement follows the **counter-clockwise** outer path by default: `00 → 01 →
 **English:**
 Back-Do moves a piece **one step backward** along the path it came from. The backward path follows logical reverse: on the outer ring, `05 → 04 → 03 → 02 → 01 → 00`. On diagonals, `cc → bb → aa → 05`, or `cc → yy → xx → 10`.
 
-If a piece is at `00` (start) and hasn't moved yet, Back-Do **cannot** be applied to it. If a piece has no valid backward move, that move is forfeited.
+If a piece is at `00` (start) and **hasn't moved yet**, Back-Do cannot be applied to it. However, a piece that has traveled the board and **returned to `00`** (ready to exit) *can* use Back-Do to move backward instead of exiting.
+
+**Merge points:** Three positions can be reached from two different paths, so Back-Do from them requires the player to **choose** which direction to go back:
+
+| Position | Back-Do Options | Why |
+|:---:|:---:|:---|
+| `00` | `19` or `qq` | Outer path (19→00) vs left diagonal (qq→00) |
+| `cc` | `bb` or `yy` | Right diagonal (bb→cc) vs left diagonal (yy→cc) |
+| `15` | `14` or `vv` | Outer path (14→15) vs right diagonal (vv→15) |
+
+If a piece has no valid backward move, that move is forfeited.
 
 **한국어:**
-빽도는 말을 온 경로를 따라 **한 칸 뒤로** 이동시킵니다. `00` 위치에서 빽도는 적용할 수 없습니다(아직 출발하지 않은 말도 마찬가지). 뒤로 갈 곳이 없으면 해당 이동은 소멸됩니다.
+빽도는 말을 온 경로를 따라 **한 칸 뒤로** 이동시킵니다. `00`에 있는 말이 아직 출발 전이면 빽도를 적용할 수 없지만, 판을 돌아 `00`에 도착한 말은 골인 대신 빽도로 뒤로 갈 수 있습니다.
+
+**합류 지점:** 세 곳(`00`, `cc`, `15`)은 두 경로가 만나는 지점이므로, 빽도 시 플레이어가 어느 방향으로 돌아갈지 **선택**합니다:
+- `00`: `19`(바깥 둘레) 또는 `qq`(왼쪽 대각선)
+- `cc`: `bb`(오른쪽 대각선) 또는 `yy`(왼쪽 대각선)
+- `15`: `14`(바깥 둘레) 또는 `vv`(오른쪽 대각선)
+
+뒤로 갈 곳이 없으면 해당 이동은 소멸됩니다.
 
 ### Forfeited Moves / 이동 소멸
 
