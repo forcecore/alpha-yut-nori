@@ -52,21 +52,33 @@ export class Board {
     vv: { 1: '15', 2: '16', 3: '17', 4: '18', 5: '19' },
   };
 
-  static readonly BACK_TABLE: Record<string, string> = {
-    '01': '00', '02': '01', '03': '02', '04': '03', '05': '04',
-    '06': '05', '07': '06', '08': '07', '09': '08', '10': '09',
-    '11': '10', '12': '11', '13': '12', '14': '13', '15': '14',
-    '16': '15', '17': '16', '18': '17', '19': '18',
-    aa: '05', bb: 'aa', cc: 'bb',
-    uu: 'cc', vv: 'uu',
-    xx: '10', yy: 'xx',
-    pp: 'cc', qq: 'pp',
+  // Backward movement (back-do): list of possible previous positions.
+  // Positions where two paths merge (00, cc, 15) have multiple destinations.
+  static readonly BACK_DO: Record<string, string[]> = {
+    '01': ['00'], '02': ['01'], '03': ['02'], '04': ['03'], '05': ['04'],
+    '06': ['05'], '07': ['06'], '08': ['07'], '09': ['08'], '10': ['09'],
+    '11': ['10'], '12': ['11'], '13': ['12'], '14': ['13'],
+    '15': ['14', 'vv'],   // outer path OR right diagonal
+    '16': ['15'], '17': ['16'], '18': ['17'], '19': ['18'],
+    '00': ['19', 'qq'],   // outer path OR left diagonal
+    aa: ['05'], bb: ['aa'],
+    cc: ['bb', 'yy'],     // right diagonal OR left diagonal
+    uu: ['cc'], vv: ['uu'],
+    xx: ['10'], yy: ['xx'],
+    pp: ['cc'], qq: ['pp'],
   };
 
   getNextPosition(currentPos: string, steps: number): string | null {
     if (steps === 0) return currentPos;
-    if (steps === -1) return Board.BACK_TABLE[currentPos] ?? null;
+    if (steps === -1) {
+      const dests = Board.BACK_DO[currentPos];
+      return dests?.[0] ?? null;
+    }
     return Board.MOVE_TABLE[currentPos]?.[steps] ?? null;
+  }
+
+  getBackDoDestinations(currentPos: string): string[] {
+    return Board.BACK_DO[currentPos] ?? [];
   }
 
   triggersShortcut(position: string): boolean {

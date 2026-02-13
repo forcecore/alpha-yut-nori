@@ -1,6 +1,7 @@
 """Tests for bonus throw mechanics (capture and Yut/Mo bonus)."""
 
 import pytest
+
 from yoot import YutGame
 
 
@@ -46,7 +47,7 @@ class TestBonusThrowStacking:
 
         # Setup: P0 has piece at 01
         piece0 = player0.pieces[0]
-        piece0.position = '01'
+        piece0.position = "01"
         piece0.is_active = True
         piece0.has_moved = True
 
@@ -76,12 +77,12 @@ class TestBonusThrowStacking:
 
         # Setup: P0 has pieces at 01 and 03
         piece0_a = player0.pieces[0]
-        piece0_a.position = '01'
+        piece0_a.position = "01"
         piece0_a.is_active = True
         piece0_a.has_moved = True
 
         piece0_b = player0.pieces[1]
-        piece0_b.position = '03'
+        piece0_b.position = "03"
         piece0_b.is_active = True
         piece0_b.has_moved = True
 

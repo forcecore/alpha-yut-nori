@@ -45,7 +45,7 @@ def test_piece_movement():
     # Manually set up some pieces
     player = game.players[0]
     piece1 = player.pieces[0]
-    piece1.enter_board('01')
+    piece1.enter_board("01")
     print(f"✓ Piece entered at position {piece1.position}")
 
     # Test movement
@@ -55,8 +55,8 @@ def test_piece_movement():
 
     # Test stacking
     piece2 = player.pieces[1]
-    piece2.enter_board('03')  # Same position as piece1 after moving 2 from 01
-    stacks = game._get_stack_at_position(0, '03')
+    piece2.enter_board("03")  # Same position as piece1 after moving 2 from 01
+    stacks = game._get_stack_at_position(0, "03")
     print(f"✓ Stack created: {len(stacks)} pieces at position {piece1.position}")
 
     print("\n✓ All movement tests passed!")
@@ -73,10 +73,10 @@ def test_capture():
     player2 = game.players[1]
 
     piece1 = player1.pieces[0]
-    piece1.enter_board('05')
+    piece1.enter_board("05")
 
     piece2 = player2.pieces[0]
-    piece2.enter_board('01')
+    piece2.enter_board("01")
 
     print(f"✓ Set up: P1 piece at {piece1.position}, P2 piece at {piece2.position}")
 
@@ -98,7 +98,7 @@ def test_win_condition():
 
     # Finish all pieces properly
     for piece in player.pieces:
-        piece.enter_board('01')
+        piece.enter_board("01")
         piece.finish()
 
     won = game.check_win_condition()
@@ -130,9 +130,9 @@ def test_throw_probabilities():
 
 def main():
     """Run all tests."""
-    print("="*60)
+    print("=" * 60)
     print("YUT NORI GAME ENGINE TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     test_basic_game_flow()
     test_piece_movement()
@@ -140,9 +140,9 @@ def main():
     test_win_condition()
     test_throw_probabilities()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("✓ ALL TESTS PASSED!")
-    print("="*60)
+    print("=" * 60)
     print("\nYou can now run: python3 cli_game.py")
 
 

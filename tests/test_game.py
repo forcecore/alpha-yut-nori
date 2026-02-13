@@ -3,7 +3,8 @@ Tests for main game engine.
 """
 
 import pytest
-from yoot import YutGame, Board
+
+from yoot import Board, YutGame
 
 
 class TestGameInitialization:
@@ -84,7 +85,7 @@ class TestGameMechanics:
 
         # Check all throws are valid
         for throw_name, move_value in throws:
-            assert throw_name in ['do', 'back_do', 'gae', 'geol', 'yut', 'mo']
+            assert throw_name in ["do", "back_do", "gae", "geol", "yut", "mo"]
 
 
 class TestPieceEntry:
@@ -99,13 +100,13 @@ class TestPieceEntry:
         assert success
 
         piece = game.players[0].pieces[0]
-        assert piece.position == '01'
+        assert piece.position == "01"
         assert piece.is_active
 
     def test_enter_piece_with_different_throws(self):
         """Test pieces enter at correct positions for different throws."""
         # Test each throw type separately with fresh games
-        throw_positions = {1: '01', 2: '02', 3: '03', 4: '04', 5: '05'}
+        throw_positions = {1: "01", 2: "02", 3: "03", 4: "04", 5: "05"}
 
         for throw_value, expected_pos in throw_positions.items():
             game = YutGame(["A", "B"], num_players=2)
@@ -123,7 +124,7 @@ class TestPieceEntry:
 
         # Enter all pieces
         for i in range(4):
-            game.players[0].pieces[i].enter_board('01')
+            game.players[0].pieces[i].enter_board("01")
 
         game.accumulated_moves = [1]
         success, _ = game.move_piece(0, -1, 1)
@@ -138,28 +139,28 @@ class TestPieceMovement:
         game = YutGame(["A", "B"], num_players=2)
 
         # Enter piece
-        game.players[0].pieces[0].enter_board('01')
+        game.players[0].pieces[0].enter_board("01")
 
         # Move it
         game.accumulated_moves = [3]
         success, _ = game.move_piece(0, 0, 3)
 
         assert success
-        assert game.players[0].pieces[0].position == '04'
+        assert game.players[0].pieces[0].position == "04"
 
     def test_move_piece_backward(self):
         """Test moving piece backward (back Do)."""
         game = YutGame(["A", "B"], num_players=2)
 
         # Enter piece at position 05
-        game.players[0].pieces[0].enter_board('05')
+        game.players[0].pieces[0].enter_board("05")
 
         # Move backward
         game.accumulated_moves = [-1]
         success, _ = game.move_piece(0, 0, -1)
 
         assert success
-        assert game.players[0].pieces[0].position == '04'
+        assert game.players[0].pieces[0].position == "04"
 
     def test_move_to_goal(self):
         """Test piece finishing at goal (two-step process)."""
@@ -167,7 +168,7 @@ class TestPieceMovement:
 
         # Place piece at 19
         piece = game.players[0].pieces[0]
-        piece.position = '19'
+        piece.position = "19"
         piece.is_active = True
         piece.has_moved = True
 
@@ -176,7 +177,7 @@ class TestPieceMovement:
         success, _ = game.move_piece(0, 0, 1)
 
         assert success
-        assert piece.position == '00'
+        assert piece.position == "00"
         assert piece.is_active  # Still on board
 
         # Step 2: Any move from 00 causes piece to exit
@@ -196,10 +197,10 @@ class TestCaptureMechanics:
         game = YutGame(["A", "B"], num_players=2)
 
         # Place opponent piece
-        game.players[1].pieces[0].enter_board('05')
+        game.players[1].pieces[0].enter_board("05")
 
         # Move our piece to same position
-        game.players[0].pieces[0].enter_board('02')
+        game.players[0].pieces[0].enter_board("02")
         game.accumulated_moves = [3]
         success, captured = game.move_piece(0, 0, 3)
 
@@ -216,8 +217,8 @@ class TestCaptureMechanics:
         game = YutGame(["A", "B"], num_players=2)
 
         # Place two pieces of same player
-        game.players[0].pieces[0].enter_board('05')
-        game.players[0].pieces[1].enter_board('02')
+        game.players[0].pieces[0].enter_board("05")
+        game.players[0].pieces[1].enter_board("02")
 
         # Move second piece to same position as first
         game.accumulated_moves = [3]
@@ -230,18 +231,18 @@ class TestCaptureMechanics:
         # Both pieces should still be active (stacking)
         assert game.players[0].pieces[0].is_active
         assert game.players[0].pieces[1].is_active
-        assert game.players[0].pieces[0].position == '05'
-        assert game.players[0].pieces[1].position == '05'
+        assert game.players[0].pieces[0].position == "05"
+        assert game.players[0].pieces[1].position == "05"
 
     def test_capture_returns_bonus_flag(self):
         """Test that capture returns True for bonus throw."""
         game = YutGame(["A", "B"], num_players=2)
 
         # Place opponent piece at position 03
-        game.players[1].pieces[0].enter_board('03')
+        game.players[1].pieces[0].enter_board("03")
 
         # Enter our piece and move to capture
-        game.players[0].pieces[0].enter_board('01')
+        game.players[0].pieces[0].enter_board("01")
         game.accumulated_moves = [2]
 
         success, captured = game.move_piece(0, 0, 2)
@@ -258,10 +259,10 @@ class TestStackingMechanics:
         game = YutGame(["A", "B"], num_players=2)
 
         # Place two pieces at same position
-        game.players[0].pieces[0].enter_board('05')
-        game.players[0].pieces[1].enter_board('05')
+        game.players[0].pieces[0].enter_board("05")
+        game.players[0].pieces[1].enter_board("05")
 
-        stack = game._get_stack_at_position(0, '05')
+        stack = game._get_stack_at_position(0, "05")
         assert len(stack) == 2
 
     def test_move_stack_together(self):
@@ -269,16 +270,16 @@ class TestStackingMechanics:
         game = YutGame(["A", "B"], num_players=2)
 
         # Create stack at a non-shortcut position
-        game.players[0].pieces[0].enter_board('03')
-        game.players[0].pieces[1].enter_board('03')
+        game.players[0].pieces[0].enter_board("03")
+        game.players[0].pieces[1].enter_board("03")
 
         # Move stack
         game.accumulated_moves = [2]
         game.move_piece(0, 0, 2)  # Returns (success, captured) tuple
 
         # Both pieces should have moved
-        assert game.players[0].pieces[0].position == '05'
-        assert game.players[0].pieces[1].position == '05'
+        assert game.players[0].pieces[0].position == "05"
+        assert game.players[0].pieces[1].position == "05"
 
 
 class TestWinCondition:
@@ -290,7 +291,7 @@ class TestWinCondition:
 
         # Properly finish all pieces
         for piece in game.players[0].pieces:
-            piece.enter_board('01')
+            piece.enter_board("01")
             piece.finish()
 
         game.check_win_condition()
@@ -304,7 +305,7 @@ class TestWinCondition:
 
         # Finish 3 pieces
         for i in range(3):
-            game.players[0].pieces[i].enter_board('01')
+            game.players[0].pieces[i].enter_board("01")
             game.players[0].pieces[i].finish()
 
         result = game.check_win_condition()
@@ -333,7 +334,7 @@ class TestLegalMoves:
         game = YutGame(["A", "B"], num_players=2)
 
         # Enter a piece
-        game.players[0].pieces[0].enter_board('05')
+        game.players[0].pieces[0].enter_board("05")
         game.accumulated_moves = [2, 3]
 
         legal_moves = game.get_legal_moves(0)
@@ -361,26 +362,26 @@ class TestGameState:
         game = YutGame(["A", "B"], num_players=2)
         state = game.get_game_state()
 
-        assert 'current_player' in state
-        assert 'game_state' in state
-        assert 'winner' in state
-        assert 'accumulated_moves' in state
-        assert 'players' in state
-        assert len(state['players']) == 2
+        assert "current_player" in state
+        assert "game_state" in state
+        assert "winner" in state
+        assert "accumulated_moves" in state
+        assert "players" in state
+        assert len(state["players"]) == 2
 
     def test_game_state_tracking(self):
         """Test game state changes are tracked."""
         game = YutGame(["A", "B"], num_players=2)
 
         initial_state = game.get_game_state()
-        assert initial_state['game_state'] == 'playing'
+        assert initial_state["game_state"] == "playing"
 
         # Enter a piece
         game.accumulated_moves = [1]
         game.move_piece(0, -1, 1)  # Returns (success, captured) tuple
 
         new_state = game.get_game_state()
-        assert new_state['players'][0]['active_pieces'] == 1
+        assert new_state["players"][0]["active_pieces"] == 1
 
     def test_move_history(self):
         """Test move history is recorded."""

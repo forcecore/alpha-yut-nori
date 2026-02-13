@@ -5,7 +5,8 @@ Player 0 = Random, Player 1 = MC. 500 games per sim count.
 """
 
 import time
-from yoot import YutGame, RandomController, MonteCarloController
+
+from yoot import MonteCarloController, RandomController, YutGame
 
 SIM_COUNTS = [5, 10, 32, 100, 316, 1000]
 NUM_GAMES = 500
@@ -14,14 +15,14 @@ NUM_GAMES = 500
 def run_games(num_sims, num_games):
     mc_wins = 0
     for g in range(num_games):
-        game = YutGame(['Random', 'MC'], 2)
+        game = YutGame(["Random", "MC"], 2)
         controllers = {
             0: RandomController(),
             1: MonteCarloController(game, 1, num_simulations=num_sims),
         }
 
         turn = 0
-        while game.game_state == 'playing' and turn < 500:
+        while game.game_state == "playing" and turn < 500:
             pid = game.current_player_idx
             ctrl = controllers[pid]
             game.throw_phase()
@@ -42,9 +43,9 @@ def run_games(num_sims, num_games):
                 if captured:
                     game.throw_phase(is_bonus=True)
                 game.check_win_condition()
-                if game.game_state != 'playing':
+                if game.game_state != "playing":
                     break
-            if game.game_state == 'finished':
+            if game.game_state == "finished":
                 break
             game.next_turn()
             turn += 1
@@ -53,7 +54,10 @@ def run_games(num_sims, num_games):
             mc_wins += 1
 
         if (g + 1) % 100 == 0:
-            print(f"    sims={num_sims:4d}  game {g+1:3d}/{num_games}  MC wins so far: {mc_wins}", flush=True)
+            print(
+                f"    sims={num_sims:4d}  game {g + 1:3d}/{num_games}  MC wins so far: {mc_wins}",
+                flush=True,
+            )
 
     return mc_wins
 
@@ -73,7 +77,10 @@ for num_sims in SIM_COUNTS:
     elapsed = time.time() - t0
     win_rate = mc_wins / NUM_GAMES
     results.append((num_sims, mc_wins, win_rate, elapsed))
-    print(f"  Done: MC wins {mc_wins}/{NUM_GAMES} = {win_rate:.1%}  ({elapsed:.0f}s)", flush=True)
+    print(
+        f"  Done: MC wins {mc_wins}/{NUM_GAMES} = {win_rate:.1%}  ({elapsed:.0f}s)",
+        flush=True,
+    )
 
 total_time = time.time() - start
 
@@ -85,5 +92,5 @@ print(f"  {'Sims':>6s}  {'MC Wins':>8s}  {'Win Rate':>9s}  {'Time':>8s}")
 print(f"  {'----':>6s}  {'-------':>8s}  {'--------':>9s}  {'----':>8s}")
 for num_sims, mc_wins, win_rate, elapsed in results:
     print(f"  {num_sims:6d}  {mc_wins:5d}/500  {win_rate:8.1%}  {elapsed:7.0f}s")
-print(f"  Total time: {total_time/3600:.1f} hours")
+print(f"  Total time: {total_time / 3600:.1f} hours")
 print("=" * 60)

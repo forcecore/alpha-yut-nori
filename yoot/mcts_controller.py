@@ -15,15 +15,23 @@ from .controller import PlayerController
 class MCTSNode:
     """A node in the MCTS tree. Each node = a game state with remaining accumulated_moves."""
 
-    __slots__ = ('game', 'player_id', 'parent', 'children',
-                 'untried_actions', 'action', 'visits', 'wins')
+    __slots__ = (
+        "game",
+        "player_id",
+        "parent",
+        "children",
+        "untried_actions",
+        "action",
+        "visits",
+        "wins",
+    )
 
     def __init__(self, game, player_id, parent=None, action=None):
         self.game = game
         self.player_id = player_id
         self.parent = parent
         self.children = []
-        self.action = action  # (piece_id, steps) or None (skip)
+        self.action = action  # (piece_id, steps, dest) or None (skip)
         self.visits = 0
         self.wins = 0.0
         self.untried_actions = None  # lazily computed
@@ -43,19 +51,19 @@ class MCTSNode:
 
         # Deduplicate: stacked pieces at same position produce identical outcomes
         seen = {}
-        for pid, steps, _dest in legal:
+        for pid, steps, dest in legal:
             if pid == -1:
-                key = ('entry', steps)
+                key = ("entry", steps, dest)
             else:
                 pos = self.game.players[self.player_id].get_piece_by_id(pid).position
-                key = (pos, steps)
+                key = (pos, steps, dest)
             if key not in seen:
-                seen[key] = pid
+                seen[key] = (pid, steps, dest)
 
-        actions: list[tuple[int, int] | None] = [(pid, steps) for (_, steps), pid in seen.items()]
+        actions: list[tuple[int, int, str | None] | None] = list(seen.values())
 
         # Only allow skip when a piece is on a late-game position
-        skip_positions = {'xx', 'yy', 'cc', 'pp', 'qq', '15', '16', '17', '18', '19'}
+        skip_positions = {"xx", "yy", "cc", "pp", "qq", "15", "16", "17", "18", "19"}
         player = self.game.players[self.player_id]
         if any(p.position in skip_positions for p in player.get_active_pieces()):
             actions.append(None)
@@ -65,14 +73,18 @@ class MCTSNode:
 
     def is_terminal(self):
         """Terminal if no moves left or game finished."""
-        return (not self.game.accumulated_moves or
-                self.game.game_state != 'playing' or
-                self.game.check_win_condition())
+        return (
+            not self.game.accumulated_moves
+            or self.game.game_state != "playing"
+            or self.game.check_win_condition()
+        )
 
     def ucb1(self, c=1.414):
         if self.visits == 0:
-            return float('inf')
-        return (self.wins / self.visits) + c * math.sqrt(math.log(self.parent.visits) / self.visits)
+            return float("inf")
+        return (self.wins / self.visits) + c * math.sqrt(
+            math.log(self.parent.visits) / self.visits
+        )
 
     def best_child(self):
         return max(self.children, key=lambda ch: ch.ucb1())
@@ -92,18 +104,20 @@ class MCTSController(PlayerController):
         self.num_iterations = num_iterations
         self._reuse_root = None
 
-    def choose_move(self, game_state: dict, legal_moves: list) -> tuple[int, int] | None:
+    def choose_move(
+        self, game_state: dict, legal_moves: list
+    ) -> tuple[int, int, str | None] | None:
         # Deduplicate candidates
         seen = {}
-        for pid, steps, _dest in legal_moves:
+        for pid, steps, dest in legal_moves:
             if pid == -1:
-                key = ('entry', steps)
+                key = ("entry", steps, dest)
             else:
                 pos = self.game.players[self.player_id].get_piece_by_id(pid).position
-                key = (pos, steps)
+                key = (pos, steps, dest)
             if key not in seen:
-                seen[key] = pid
-        candidates = [(pid, steps) for (_, steps), pid in seen.items()]
+                seen[key] = (pid, steps, dest)
+        candidates = list(seen.values())
 
         if len(candidates) == 1:
             self._reuse_root = None
@@ -113,7 +127,9 @@ class MCTSController(PlayerController):
         root = None
         prior_visits = 0
         if self._reuse_root is not None:
-            if self._reuse_root.game.accumulated_moves == list(self.game.accumulated_moves):
+            if self._reuse_root.game.accumulated_moves == list(
+                self.game.accumulated_moves
+            ):
                 root = self._reuse_root
                 prior_visits = root.visits
                 root.parent = None
@@ -143,12 +159,18 @@ class MCTSController(PlayerController):
 
         # Log tree stats
         reuse_str = f" (reused {prior_visits} prior visits)" if prior_visits else ""
-        print(f"  [MCTS] {self.num_iterations} iterations{reuse_str}, {len(root.children)} root children:")
+        print(
+            f"  [MCTS] {self.num_iterations} iterations{reuse_str}, {len(root.children)} root children:"
+        )
         ranked = sorted(root.children, key=lambda c: c.visits, reverse=True)
         for ch in ranked:
             wr = ch.wins / ch.visits if ch.visits > 0 else 0
-            action_str = 'skip' if ch.action is None else f'piece={ch.action[0]} steps={ch.action[1]}'
-            marker = ' <<' if ch is best else ''
+            action_str = (
+                "skip"
+                if ch.action is None
+                else f"piece={ch.action[0]} steps={ch.action[1]} dest={ch.action[2]}"
+            )
+            marker = " <<" if ch is best else ""
             print(f"    {action_str}: {ch.visits} visits, {wr:.1%} winrate{marker}")
 
         return best.action
@@ -177,8 +199,10 @@ class MCTSController(PlayerController):
             # Skip: clear accumulated moves
             child_game.accumulated_moves = []
         else:
-            piece_id, steps = action
-            success, captured = child_game.move_piece(self.player_id, piece_id, steps)
+            piece_id, steps, dest = action
+            success, captured = child_game.move_piece(
+                self.player_id, piece_id, steps, dest
+            )
             if not success:
                 # Invalid move — return parent for rollout
                 return node
@@ -206,14 +230,14 @@ class MCTSController(PlayerController):
         if len(sim.rankings) > target_rank_idx:
             return 1.0 if sim.rankings[target_rank_idx] == player_id else 0.0
 
-        if sim.game_state != 'playing':
+        if sim.game_state != "playing":
             return 0.0
 
         # Full random playout
         sim.next_turn()
 
         for _ in range(self.MAX_ROLLOUT_TURNS):
-            if sim.game_state != 'playing':
+            if sim.game_state != "playing":
                 break
 
             current_pid = sim.current_player_idx
@@ -262,8 +286,8 @@ class MCTSController(PlayerController):
                 sim.accumulated_moves = []
                 break
 
-            pid, steps, _dest = random.choice(legal)
-            success, captured = sim.move_piece(player_id, pid, steps)
+            pid, steps, dest = random.choice(legal)
+            success, captured = sim.move_piece(player_id, pid, steps, dest)
 
             if not success:
                 sim.accumulated_moves = []

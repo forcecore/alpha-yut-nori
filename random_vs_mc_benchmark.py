@@ -5,7 +5,8 @@ Benchmark: Random AI vs Monte Carlo AI.
 """
 
 import time
-from yoot import YutGame, RandomController, MonteCarloController
+
+from yoot import MonteCarloController, RandomController, YutGame
 
 NUM_GAMES_PER_CONFIG = 500
 NUM_SIMS = 100
@@ -61,7 +62,7 @@ def run_games(random_idx, mc_idx, num_games):
         elapsed = time.time() - game_start
 
         print(
-            f"  Game {g+1:3d}: winner={winner_name:6s} turns={turn:3d} ({elapsed:.1f}s)  "
+            f"  Game {g + 1:3d}: winner={winner_name:6s} turns={turn:3d} ({elapsed:.1f}s)  "
             f"Running: MC={wins['mc']} Random={wins['random']}",
             flush=True,
         )
@@ -90,8 +91,14 @@ print()
 print("=" * 60)
 print(f"FINAL RESULTS — {total_games} games, {NUM_SIMS} sims/move")
 print("=" * 60)
-print(f"  Config 1 (Random first, MC second): MC={wins1['mc']} Random={wins1['random']}  MC win rate: {wins1['mc']/NUM_GAMES_PER_CONFIG:.1%}")
-print(f"  Config 2 (MC first, Random second):  MC={wins2['mc']} Random={wins2['random']}  MC win rate: {wins2['mc']/NUM_GAMES_PER_CONFIG:.1%}")
-print(f"  Overall:                              MC={total_mc} Random={total_random}  MC win rate: {total_mc/total_games:.1%}")
-print(f"  Total time: {total_time/3600:.1f} hours")
+print(
+    f"  Config 1 (Random first, MC second): MC={wins1['mc']} Random={wins1['random']}  MC win rate: {wins1['mc'] / NUM_GAMES_PER_CONFIG:.1%}"
+)
+print(
+    f"  Config 2 (MC first, Random second):  MC={wins2['mc']} Random={wins2['random']}  MC win rate: {wins2['mc'] / NUM_GAMES_PER_CONFIG:.1%}"
+)
+print(
+    f"  Overall:                              MC={total_mc} Random={total_random}  MC win rate: {total_mc / total_games:.1%}"
+)
+print(f"  Total time: {total_time / 3600:.1f} hours")
 print("=" * 60)

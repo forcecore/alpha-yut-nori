@@ -229,7 +229,7 @@ export class GameUI {
         const matchingMoves = this.getMovesForPiece(this.selectedPieceId)
           .filter(m => m.destination === position);
         if (matchingMoves.length > 0) {
-          this.executeMove(matchingMoves[0].pieceId, matchingMoves[0].steps);
+          this.executeMove(matchingMoves[0].pieceId, matchingMoves[0].steps, matchingMoves[0].destination);
         }
       }
     });
@@ -319,7 +319,7 @@ export class GameUI {
           break;
         }
 
-        const { captured } = this.game.movePiece(playerId, move.pieceId, move.steps);
+        const { captured } = this.game.movePiece(playerId, move.pieceId, move.steps, move.destination);
         this.renderer.clearHighlights();
         this.updateDisplay();
         await this.delay(300);
@@ -381,7 +381,7 @@ export class GameUI {
         }
 
         await this.delay(300);
-        const { captured } = this.game.movePiece(playerId, move.pieceId, move.steps);
+        const { captured } = this.game.movePiece(playerId, move.pieceId, move.steps, move.destination);
         this.updateDisplay();
         await this.delay(400);
 
@@ -504,7 +504,7 @@ export class GameUI {
       const btn = document.createElement('button');
       btn.className = 'btn btn-move';
       btn.textContent = `[${keyHint}] ${move.steps} → ${destStr}`;
-      btn.addEventListener('click', () => this.executeMove(move.pieceId, move.steps));
+      btn.addEventListener('click', () => this.executeMove(move.pieceId, move.steps, move.destination));
       this.actionButtons.appendChild(btn);
     }
 
@@ -518,7 +518,7 @@ export class GameUI {
     this.setStatus(`${player.name} — choose move for ${label}`);
   }
 
-  private executeMove(pieceId: number, steps: number): void {
+  private executeMove(pieceId: number, steps: number, destination: string): void {
     if (this.phase !== 'selecting_move') return;
     this.phase = 'animating';
     this.renderer.clearHighlights();
@@ -526,7 +526,7 @@ export class GameUI {
 
     const controller = this.controllers[this.game.currentPlayerIdx];
     if (controller instanceof HumanController) {
-      controller.submitMove(pieceId, steps);
+      controller.submitMove(pieceId, steps, destination);
     }
   }
 

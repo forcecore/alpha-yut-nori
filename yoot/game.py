@@ -3,9 +3,10 @@ Main game engine for Yut Nori.
 """
 
 from typing import Dict, List, Optional, Tuple
+
 from .board import Board
-from .player import Player
 from .piece import Piece
+from .player import Player
 from .yut_throw import YutThrow
 
 
@@ -54,7 +55,9 @@ class YutGame:
             self.accumulated_moves.append(move_value)
 
             bonus_msg = " (bonus)" if is_bonus else ""
-            self.log_move(f"{self.get_current_player().name} threw {throw_name} ({move_value} spaces){bonus_msg}")
+            self.log_move(
+                f"{self.get_current_player().name} threw {throw_name} ({move_value} spaces){bonus_msg}"
+            )
 
             if not YutThrow.grants_extra_turn(throw_name):
                 break
@@ -74,20 +77,26 @@ class YutGame:
 
         for piece in player.get_active_pieces():
             for steps in self.accumulated_moves:
-                dest = self.board.get_next_position(piece.position, steps)
-                if dest is not None:
-                    legal_moves.append((piece.piece_id, steps, dest))
+                if steps == -1:
+                    for dest in self.board.get_back_do_destinations(piece.position):
+                        legal_moves.append((piece.piece_id, steps, dest))
+                else:
+                    dest = self.board.get_next_position(piece.position, steps)
+                    if dest is not None:
+                        legal_moves.append((piece.piece_id, steps, dest))
 
         # Check if new piece can enter
         if player.can_enter_new_piece() and self.accumulated_moves:
             for steps in self.accumulated_moves:
                 if 1 <= steps <= 5:
-                    entry_pos = f'{steps:02d}'
+                    entry_pos = f"{steps:02d}"
                     legal_moves.append((-1, steps, entry_pos))
 
         return legal_moves
 
-    def move_piece(self, player_id: int, piece_id: int, steps: int) -> tuple[bool, bool]:
+    def move_piece(
+        self, player_id: int, piece_id: int, steps: int, destination: str | None = None
+    ) -> tuple[bool, bool]:
         """
         Execute a single piece movement.
 
@@ -105,16 +114,20 @@ class YutGame:
             if not (1 <= steps <= 5):
                 return False, False
 
-            entry_position = f'{steps:02d}'
+            entry_position = f"{steps:02d}"
             new_piece = player.get_inactive_pieces()[0]
             new_piece.enter_board(entry_position)
             self.accumulated_moves.remove(steps)
 
             shortcut = self.board.triggers_shortcut(entry_position)
             if shortcut:
-                self.log_move(f"{player.name} entered new piece (Piece {new_piece.piece_id}) at position {entry_position} (shortcut position)")
+                self.log_move(
+                    f"{player.name} entered new piece (Piece {new_piece.piece_id}) at position {entry_position} (shortcut position)"
+                )
             else:
-                self.log_move(f"{player.name} entered new piece (Piece {new_piece.piece_id}) at position {entry_position}")
+                self.log_move(
+                    f"{player.name} entered new piece (Piece {new_piece.piece_id}) at position {entry_position}"
+                )
 
             captured = self.check_capture(player_id, new_piece.position)
             return True, captured
@@ -130,10 +143,12 @@ class YutGame:
 
         current_pos = piece.position
 
-        # Special case: at 00 with has_moved → piece exits the board
-        if current_pos == '00' and piece.has_moved:
+        # Special case: at 00 with has_moved → piece exits the board (but not on back-do)
+        if current_pos == "00" and piece.has_moved and steps != -1:
             stack = self._get_stack_at_position(player_id, current_pos)
-            piece_str = f"Piece {piece_id}" if len(stack) == 1 else f"Stack (x{len(stack)})"
+            piece_str = (
+                f"Piece {piece_id}" if len(stack) == 1 else f"Stack (x{len(stack)})"
+            )
 
             for stacked_piece in stack:
                 stacked_piece.finish()
@@ -142,7 +157,14 @@ class YutGame:
             self.log_move(f"{player.name}'s {piece_str} exited the board!")
             return True, False
 
-        new_pos = self.board.get_next_position(current_pos, steps)
+        # For back-do with explicit destination, use it directly
+        if steps == -1 and destination is not None:
+            valid = self.board.get_back_do_destinations(current_pos)
+            if destination not in valid:
+                return False, False
+            new_pos = destination
+        else:
+            new_pos = self.board.get_next_position(current_pos, steps)
 
         if new_pos is None:
             return False, False
@@ -158,12 +180,18 @@ class YutGame:
 
         piece_str = f"Piece {piece_id}" if len(stack) == 1 else f"Stack (x{len(stack)})"
 
-        if new_pos == '00':
-            self.log_move(f"{player.name} moved {piece_str} {steps} spaces to position 00 (at goal - next move exits)")
+        if new_pos == "00":
+            self.log_move(
+                f"{player.name} moved {piece_str} {steps} spaces to position 00 (at goal - next move exits)"
+            )
         elif self.board.triggers_shortcut(new_pos):
-            self.log_move(f"{player.name} moved {piece_str} {steps} spaces to {new_pos} (shortcut position - next move uses diagonal)")
+            self.log_move(
+                f"{player.name} moved {piece_str} {steps} spaces to {new_pos} (shortcut position - next move uses diagonal)"
+            )
         else:
-            self.log_move(f"{player.name} moved {piece_str} {steps} spaces to {new_pos}")
+            self.log_move(
+                f"{player.name} moved {piece_str} {steps} spaces to {new_pos}"
+            )
 
         captured = self.check_capture(player_id, new_pos)
 
@@ -184,8 +212,7 @@ class YutGame:
                 continue
 
             captured_pieces = [
-                p for p in other_player.get_active_pieces()
-                if p.position == position
+                p for p in other_player.get_active_pieces() if p.position == position
             ]
 
             if captured_pieces:
@@ -236,29 +263,29 @@ class YutGame:
     def get_game_state(self) -> Dict:
         """Get current game state as dictionary."""
         return {
-            'current_player': self.current_player_idx,
-            'game_state': self.game_state,
-            'winner': self.winner,
-            'rankings': self.rankings.copy(),
-            'accumulated_moves': self.accumulated_moves.copy(),
-            'players': [
+            "current_player": self.current_player_idx,
+            "game_state": self.game_state,
+            "winner": self.winner,
+            "rankings": self.rankings.copy(),
+            "accumulated_moves": self.accumulated_moves.copy(),
+            "players": [
                 {
-                    'id': p.player_id,
-                    'name': p.name,
-                    'active_pieces': len(p.get_active_pieces()),
-                    'finished_pieces': len(p.get_finished_pieces()),
-                    'pieces': [
+                    "id": p.player_id,
+                    "name": p.name,
+                    "active_pieces": len(p.get_active_pieces()),
+                    "finished_pieces": len(p.get_finished_pieces()),
+                    "pieces": [
                         {
-                            'id': piece.piece_id,
-                            'position': piece.position,
-                            'is_active': piece.is_active,
+                            "id": piece.piece_id,
+                            "position": piece.position,
+                            "is_active": piece.is_active,
                         }
                         for piece in p.pieces
-                    ]
+                    ],
                 }
                 for p in self.players
             ],
-            'move_history': self.move_history[-10:]
+            "move_history": self.move_history[-10:],
         }
 
     def get_all_pieces(self) -> List[Piece]:

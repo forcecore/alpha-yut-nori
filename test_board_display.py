@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Test board display with pieces."""
 
-from yoot import YutGame, Piece, Board
+from yoot import Board, Piece, YutGame
+
 
 def test_board_display():
     """Test that pieces show up on board."""
@@ -15,19 +16,19 @@ def test_board_display():
 
     # Place Player 0's piece at position '01'
     piece0 = player0.pieces[0]
-    piece0.position = '01'
+    piece0.position = "01"
     piece0.is_active = True
     piece0.has_moved = True
 
     # Place Player 1's piece at position '05'
     piece1 = player1.pieces[0]
-    piece1.position = '05'
+    piece1.position = "05"
     piece1.is_active = True
     piece1.has_moved = True
 
     # Place another piece at position 'aa'
     piece2 = player0.pieces[1]
-    piece2.position = 'aa'
+    piece2.position = "aa"
     piece2.is_active = True
     piece2.has_moved = True
 
@@ -44,7 +45,9 @@ def test_board_display():
     # Create piece map to debug
     piece_map = {}
     for piece in all_pieces:
-        print(f"  Piece: player={piece.player_id}, pos={piece.position}, active={piece.is_active}")
+        print(
+            f"  Piece: player={piece.player_id}, pos={piece.position}, active={piece.is_active}"
+        )
         if piece.position and piece.is_active:
             pos = piece.position
             if pos not in piece_map:
@@ -56,6 +59,7 @@ def test_board_display():
     # Render board
     print("\nRendered board:")
     print(game.board.render_board(all_pieces))
+
 
 if __name__ == "__main__":
     test_board_display()

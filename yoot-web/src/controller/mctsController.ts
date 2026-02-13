@@ -2,7 +2,7 @@ import type { PlayerController } from './controller';
 import type { GameState, LegalMove } from '../engine/types';
 import { YutGame } from '../engine/game';
 
-type Action = { pieceId: number; steps: number } | null;
+type Action = { pieceId: number; steps: number; destination?: string } | null;
 
 class MCTSNode {
   game: YutGame;
@@ -40,23 +40,21 @@ class MCTSNode {
     }
 
     // Deduplicate: stacked pieces at same position produce identical outcomes
-    const seen = new Map<string, number>();
-    for (const { pieceId, steps } of legal) {
+    const seen = new Map<string, LegalMove>();
+    for (const move of legal) {
       let key: string;
-      if (pieceId === -1) {
-        key = `entry:${steps}`;
+      if (move.pieceId === -1) {
+        key = `entry:${move.steps}:${move.destination}`;
       } else {
-        const pos = this.game.players[this.playerId].getPieceById(pieceId).position;
-        key = `${pos}:${steps}`;
+        const pos = this.game.players[this.playerId].getPieceById(move.pieceId).position;
+        key = `${pos}:${move.steps}:${move.destination}`;
       }
-      if (!seen.has(key)) seen.set(key, pieceId);
+      if (!seen.has(key)) seen.set(key, move);
     }
 
-    const actions: Action[] = [];
-    for (const [key, pieceId] of seen) {
-      const steps = Number(key.split(':')[1]);
-      actions.push({ pieceId, steps });
-    }
+    const actions: Action[] = [...seen.values()].map(m => ({
+      pieceId: m.pieceId, steps: m.steps, destination: m.destination,
+    }));
 
     // Only allow skip when a piece is on a late-game position
     const skipPositions = new Set(['xx', 'yy', 'cc', 'pp', 'qq', '15', '16', '17', '18', '19']);
@@ -128,29 +126,26 @@ export class MCTSController implements PlayerController {
     return true;
   }
 
-  async chooseMove(_gameState: GameState, legalMoves: LegalMove[]): Promise<{ pieceId: number; steps: number } | null> {
+  async chooseMove(_gameState: GameState, legalMoves: LegalMove[]): Promise<{ pieceId: number; steps: number; destination?: string } | null> {
     // Deduplicate candidates
-    const seen = new Map<string, number>();
-    for (const { pieceId, steps } of legalMoves) {
+    const seen = new Map<string, LegalMove>();
+    for (const move of legalMoves) {
       let key: string;
-      if (pieceId === -1) {
-        key = `entry:${steps}`;
+      if (move.pieceId === -1) {
+        key = `entry:${move.steps}:${move.destination}`;
       } else {
-        const pos = this.game.players[this.playerId].getPieceById(pieceId).position;
-        key = `${pos}:${steps}`;
+        const pos = this.game.players[this.playerId].getPieceById(move.pieceId).position;
+        key = `${pos}:${move.steps}:${move.destination}`;
       }
-      if (!seen.has(key)) seen.set(key, pieceId);
+      if (!seen.has(key)) seen.set(key, move);
     }
 
-    const candidates: { pieceId: number; steps: number }[] = [];
-    for (const [key, pieceId] of seen) {
-      const steps = Number(key.split(':')[1]);
-      candidates.push({ pieceId, steps });
-    }
+    const candidates = [...seen.values()];
 
     if (candidates.length === 1) {
       this.reuseRoot = null;
-      return candidates[0];
+      const c = candidates[0];
+      return { pieceId: c.pieceId, steps: c.steps, destination: c.destination };
     }
 
     // Try to reuse saved subtree from previous move in this turn
@@ -178,7 +173,8 @@ export class MCTSController implements PlayerController {
 
     if (root.children.length === 0) {
       this.reuseRoot = null;
-      return candidates[0];
+      const c = candidates[0];
+      return { pieceId: c.pieceId, steps: c.steps, destination: c.destination };
     }
 
     const best = root.mostVisitedChild();
@@ -192,7 +188,7 @@ export class MCTSController implements PlayerController {
     console.log(`[MCTS] ${this.numIterations} iterations${reuseStr}, ${root.children.length} root children:`);
     for (const ch of ranked) {
       const wr = ch.visits > 0 ? ch.wins / ch.visits : 0;
-      const actionStr = ch.action === null ? 'skip' : `piece=${ch.action.pieceId} steps=${ch.action.steps}`;
+      const actionStr = ch.action === null ? 'skip' : `piece=${ch.action.pieceId} steps=${ch.action.steps} dest=${ch.action.destination}`;
       const marker = ch === best ? ' <<' : '';
       console.log(`  ${actionStr}: ${ch.visits} visits, ${(wr * 100).toFixed(1)}% winrate${marker}`);
     }
@@ -220,7 +216,7 @@ export class MCTSController implements PlayerController {
     if (action === null) {
       childGame.accumulatedMoves = [];
     } else {
-      const { success, captured } = childGame.movePiece(this.playerId, action.pieceId, action.steps);
+      const { success, captured } = childGame.movePiece(this.playerId, action.pieceId, action.steps, action.destination);
       if (!success) return node;
       if (captured) childGame.throwPhase(true);
       childGame.checkWinCondition();
@@ -288,7 +284,7 @@ export class MCTSController implements PlayerController {
       }
 
       const pick = legal[Math.floor(Math.random() * legal.length)];
-      const { success, captured } = sim.movePiece(playerId, pick.pieceId, pick.steps);
+      const { success, captured } = sim.movePiece(playerId, pick.pieceId, pick.steps, pick.destination);
 
       if (!success) {
         sim.accumulatedMoves = [];

@@ -15,11 +15,11 @@ class YutThrow:
 
     # Throw results mapped to Korean names
     THROW_NAMES = {
-        1: "do",    # 도 (1 flat)
-        2: "gae",   # 개 (2 flat)
+        1: "do",  # 도 (1 flat)
+        2: "gae",  # 개 (2 flat)
         3: "geol",  # 걸 (3 flat)
-        4: "yut",   # 윷 (4 flat)
-        0: "mo"     # 모 (0 flat, all round)
+        4: "yut",  # 윷 (4 flat)
+        0: "mo",  # 모 (0 flat, all round)
     }
 
     # Move values for each throw
@@ -29,7 +29,7 @@ class YutThrow:
         "gae": 2,
         "geol": 3,
         "yut": 4,
-        "mo": 5
+        "mo": 5,
     }
 
     # Throws that grant extra turn
@@ -54,8 +54,9 @@ class YutThrow:
             Tuple of (throw_name, move_value)
         """
         # Simulate which sticks land flat (0-3 indices)
-        sticks = [1 if random.random() < YutThrow.FLAT_PROBABILITY else 0
-                  for _ in range(4)]
+        sticks = [
+            1 if random.random() < YutThrow.FLAT_PROBABILITY else 0 for _ in range(4)
+        ]
         flat_count = sum(sticks)
 
         throw_name = YutThrow.THROW_NAMES[flat_count]

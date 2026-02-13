@@ -2,7 +2,8 @@
 Player state management for Yut Nori.
 """
 
-from typing import List, Dict
+from typing import Dict, List
+
 from .piece import Piece
 
 
@@ -19,8 +20,7 @@ class Player:
         self.player_id = player_id
         self.name = name
         self.pieces: List[Piece] = [
-            Piece(piece_id=i, player_id=player_id)
-            for i in range(self.NUM_PIECES)
+            Piece(piece_id=i, player_id=player_id) for i in range(self.NUM_PIECES)
         ]
 
     def get_active_pieces(self) -> List[Piece]:

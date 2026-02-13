@@ -15,7 +15,7 @@ def simulate_simple_game():
     makes the first available legal move.
     """
     print("Simulating automated Yut Nori game...")
-    print("="*60)
+    print("=" * 60)
 
     # Initialize game
     game = YutGame(["Alice", "Bob", "Carol", "Dave"])
@@ -43,7 +43,9 @@ def simulate_simple_game():
             legal_moves = game.get_legal_moves(player.player_id)
 
             if not legal_moves:
-                print(f"  No legal moves available. Forfeiting {game.accumulated_moves}")
+                print(
+                    f"  No legal moves available. Forfeiting {game.accumulated_moves}"
+                )
                 game.accumulated_moves = []
                 break
 
@@ -51,9 +53,15 @@ def simulate_simple_game():
             piece_id, steps, destination = legal_moves[0]
 
             piece_str = "New piece" if piece_id == -1 else f"Piece {piece_id}"
-            dest_str = "GOAL" if destination == -1 or destination == 28 else f"pos {destination}"
+            dest_str = (
+                "GOAL"
+                if destination == -1 or destination == 28
+                else f"pos {destination}"
+            )
 
-            print(f"  Move {moves_made + 1}: {piece_str} by {steps} spaces to {dest_str}")
+            print(
+                f"  Move {moves_made + 1}: {piece_str} by {steps} spaces to {dest_str}"
+            )
 
             # Execute move
             success = game.move_piece(player.player_id, piece_id, steps)
@@ -83,14 +91,14 @@ def simulate_simple_game():
         game.next_turn()
 
     # Game over
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     if game.winner is not None:
         winner = game.players[game.winner]
         print(f"🎉 {winner.name} wins after {turn_count} turns!")
     else:
         print(f"Game ended after {turn_count} turns (max limit reached)")
 
-    print("="*60)
+    print("=" * 60)
 
     # Show final statistics
     print("\nFinal Statistics:")
@@ -98,7 +106,9 @@ def simulate_simple_game():
         finished = len(player.get_finished_pieces())
         active = len(player.get_active_pieces())
         waiting = len(player.get_inactive_pieces())
-        print(f"  {player.name}: {finished} finished, {active} active, {waiting} waiting")
+        print(
+            f"  {player.name}: {finished} finished, {active} active, {waiting} waiting"
+        )
 
 
 def demonstrate_api_features():
@@ -106,7 +116,7 @@ def demonstrate_api_features():
     Demonstrate various API features and state inspection.
     """
     print("\n\nDemonstrating API Features")
-    print("="*60)
+    print("=" * 60)
 
     game = YutGame()
 
@@ -162,9 +172,9 @@ def main():
     # Show API features
     demonstrate_api_features()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Examples complete!")
-    print("="*60)
+    print("=" * 60)
 
 
 if __name__ == "__main__":

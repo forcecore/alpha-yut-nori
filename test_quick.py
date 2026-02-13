@@ -3,6 +3,7 @@
 
 from yoot import YutGame
 
+
 def test_game_basics():
     """Test basic game operations."""
     print("Creating game...")
@@ -41,6 +42,7 @@ def test_game_basics():
     print(rendered)
 
     print("\n✅ All basic tests passed!")
+
 
 if __name__ == "__main__":
     test_game_basics()

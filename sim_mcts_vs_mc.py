@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Simulate MCTS vs Monte Carlo: 500 games each side going first."""
 
-import sys
 import io
-from yoot import YutGame, MonteCarloController, MCTSController
+import sys
+
+from yoot import MCTSController, MonteCarloController, YutGame
 
 
 def play_game(mcts_player_id: int) -> int:
@@ -16,8 +17,12 @@ def play_game(mcts_player_id: int) -> int:
     game = YutGame(names, 2)
 
     controllers = {}
-    controllers[mcts_player_id] = MCTSController(game, mcts_player_id, num_iterations=1000)
-    controllers[mc_player_id] = MonteCarloController(game, mc_player_id, num_simulations=100)
+    controllers[mcts_player_id] = MCTSController(
+        game, mcts_player_id, num_iterations=1000
+    )
+    controllers[mc_player_id] = MonteCarloController(
+        game, mc_player_id, num_simulations=100
+    )
 
     max_turns = 500
     for _ in range(max_turns):
@@ -75,7 +80,7 @@ def main():
     total = 1000
 
     for i in range(total):
-        mcts_is_p0 = (i % 2 == 0)
+        mcts_is_p0 = i % 2 == 0
         mcts_pid = 0 if mcts_is_p0 else 1
 
         sys.stdout = io.StringIO()
@@ -91,13 +96,15 @@ def main():
 
         if True:
             phase = "MCTS=P0" if mcts_is_p0 else "MCTS=P1"
-            print(f"  [{phase}] Game {i+1}/{total}: MCTS {mcts_wins} - MC {mc_wins} (draws: {draws})")
+            print(
+                f"  [{phase}] Game {i + 1}/{total}: MCTS {mcts_wins} - MC {mc_wins} (draws: {draws})"
+            )
 
     print()
     print("=" * 50)
     print(f"FINAL RESULTS ({total} games)")
-    print(f"  MCTS wins: {mcts_wins} ({mcts_wins/total:.1%})")
-    print(f"  MC   wins: {mc_wins} ({mc_wins/total:.1%})")
+    print(f"  MCTS wins: {mcts_wins} ({mcts_wins / total:.1%})")
+    print(f"  MC   wins: {mc_wins} ({mc_wins / total:.1%})")
     print(f"  Draws:     {draws}")
     print("=" * 50)
 

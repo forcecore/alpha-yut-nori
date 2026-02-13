@@ -6,7 +6,8 @@ Runs 1000 games with 3000 simulations per move decision.
 
 import sys
 import time
-from yoot import YutGame, MonteCarloController
+
+from yoot import MonteCarloController, YutGame
 
 NUM_GAMES = 1000
 NUM_SIMS = 100
@@ -16,13 +17,13 @@ start = time.time()
 
 for g in range(NUM_GAMES):
     game_start = time.time()
-    game = YutGame(['MC0', 'MC1'], 2)
+    game = YutGame(["MC0", "MC1"], 2)
     mc0 = MonteCarloController(game, 0, num_simulations=NUM_SIMS)
     mc1 = MonteCarloController(game, 1, num_simulations=NUM_SIMS)
     controllers = {0: mc0, 1: mc1}
 
     turn = 0
-    while game.game_state == 'playing' and turn < 500:
+    while game.game_state == "playing" and turn < 500:
         pid = game.current_player_idx
         ctrl = controllers[pid]
         game.throw_phase()
@@ -43,9 +44,9 @@ for g in range(NUM_GAMES):
             if captured:
                 game.throw_phase(is_bonus=True)
             game.check_win_condition()
-            if game.game_state != 'playing':
+            if game.game_state != "playing":
                 break
-        if game.game_state == 'finished':
+        if game.game_state == "finished":
             break
         game.next_turn()
         turn += 1
@@ -54,15 +55,18 @@ for g in range(NUM_GAMES):
     wins[winner] = wins.get(winner, 0) + 1
     elapsed = time.time() - game_start
 
-    print(f"Game {g+1:4d}: winner=MC{winner} turns={turn:3d} ({elapsed:.1f}s)  "
-          f"Running: MC0={wins[0]} MC1={wins[1]}", flush=True)
+    print(
+        f"Game {g + 1:4d}: winner=MC{winner} turns={turn:3d} ({elapsed:.1f}s)  "
+        f"Running: MC0={wins[0]} MC1={wins[1]}",
+        flush=True,
+    )
 
 total_time = time.time() - start
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print(f"FINAL RESULTS — {NUM_GAMES} games, {NUM_SIMS} sims/move")
-print(f"{'='*60}")
-print(f"  MC0 (goes first):  {wins[0]:4d} wins ({wins[0]/NUM_GAMES:.1%})")
-print(f"  MC1 (goes second): {wins[1]:4d} wins ({wins[1]/NUM_GAMES:.1%})")
-print(f"  Total time: {total_time/3600:.1f} hours")
-print(f"  Avg time per game: {total_time/NUM_GAMES:.1f}s")
-print(f"{'='*60}")
+print(f"{'=' * 60}")
+print(f"  MC0 (goes first):  {wins[0]:4d} wins ({wins[0] / NUM_GAMES:.1%})")
+print(f"  MC1 (goes second): {wins[1]:4d} wins ({wins[1] / NUM_GAMES:.1%})")
+print(f"  Total time: {total_time / 3600:.1f} hours")
+print(f"  Avg time per game: {total_time / NUM_GAMES:.1f}s")
+print(f"{'=' * 60}")

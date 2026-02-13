@@ -68,17 +68,29 @@ export class YutGame {
     const moves: LegalMove[] = [];
 
     for (const piece of player.getActivePieces()) {
-      // Special case: at 00 with hasMoved → any move value exits the board
+      // Special case: at 00 with hasMoved → any move value exits the board (except back-do)
       if (piece.position === '00' && piece.hasMoved) {
         for (const steps of this.accumulatedMoves) {
-          moves.push({ pieceId: piece.pieceId, steps, destination: 'EXIT' });
+          if (steps === -1) {
+            for (const dest of this.board.getBackDoDestinations('00')) {
+              moves.push({ pieceId: piece.pieceId, steps, destination: dest });
+            }
+          } else {
+            moves.push({ pieceId: piece.pieceId, steps, destination: 'EXIT' });
+          }
         }
         continue;
       }
       for (const steps of this.accumulatedMoves) {
-        const dest = this.board.getNextPosition(piece.position!, steps);
-        if (dest !== null) {
-          moves.push({ pieceId: piece.pieceId, steps, destination: dest });
+        if (steps === -1) {
+          for (const dest of this.board.getBackDoDestinations(piece.position!)) {
+            moves.push({ pieceId: piece.pieceId, steps, destination: dest });
+          }
+        } else {
+          const dest = this.board.getNextPosition(piece.position!, steps);
+          if (dest !== null) {
+            moves.push({ pieceId: piece.pieceId, steps, destination: dest });
+          }
         }
       }
     }
@@ -96,7 +108,7 @@ export class YutGame {
     return moves;
   }
 
-  movePiece(playerId: number, pieceId: number, steps: number): MoveResult {
+  movePiece(playerId: number, pieceId: number, steps: number, destination?: string): MoveResult {
     const player = this.players[playerId];
 
     // Handle entering new piece
@@ -132,8 +144,8 @@ export class YutGame {
 
     const currentPos = piece.position!;
 
-    // Special case: at 00 with hasMoved → piece exits the board
-    if (currentPos === '00' && piece.hasMoved) {
+    // Special case: at 00 with hasMoved → piece exits the board (but not on back-do)
+    if (currentPos === '00' && piece.hasMoved && steps !== -1) {
       const stack = this.getStackAtPosition(playerId, currentPos);
       const pieceStr = stack.length === 1 ? `Piece ${pieceId}` : `Stack (x${stack.length})`;
 
@@ -146,7 +158,15 @@ export class YutGame {
       return { success: true, captured: false };
     }
 
-    const newPos = this.board.getNextPosition(currentPos, steps);
+    // For back-do with explicit destination, use it directly
+    let newPos: string | null;
+    if (steps === -1 && destination) {
+      const valid = this.board.getBackDoDestinations(currentPos);
+      if (!valid.includes(destination)) return { success: false, captured: false };
+      newPos = destination;
+    } else {
+      newPos = this.board.getNextPosition(currentPos, steps);
+    }
     if (newPos === null) return { success: false, captured: false };
 
     // Get all pieces in stack at current position

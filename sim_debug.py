@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Play 3 games with MCTS output visible to diagnose behavior."""
 
-from yoot import YutGame, MonteCarloController, MCTSController
+from yoot import MCTSController, MonteCarloController, YutGame
 
 
 def play_game(game_num: int) -> int:
@@ -30,7 +30,9 @@ def play_game(game_num: int) -> int:
                 break
 
             if pid == mcts_pid:
-                print(f"  [Turn {turn}, Move {move_num}] accumulated={game.accumulated_moves}, {len(legal)} legal moves")
+                print(
+                    f"  [Turn {turn}, Move {move_num}] accumulated={game.accumulated_moves}, {len(legal)} legal moves"
+                )
 
             choice = ctrl.choose_move(game.get_game_state(), legal)
 
@@ -65,5 +67,5 @@ def play_game(game_num: int) -> int:
 
 
 for i in range(3):
-    print(f"\n{'='*60}\nGAME {i+1}\n{'='*60}")
+    print(f"\n{'=' * 60}\nGAME {i + 1}\n{'=' * 60}")
     play_game(i + 1)

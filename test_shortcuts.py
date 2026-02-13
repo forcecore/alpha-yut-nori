@@ -3,6 +3,7 @@
 
 from yoot import YutGame
 
+
 def test_automatic_shortcuts():
     """Test that shortcuts trigger automatically."""
     game = YutGame(player_names=["Alice", "Bob"], num_players=2)
@@ -22,7 +23,7 @@ def test_automatic_shortcuts():
     print(f"Piece position: {piece.position}")
     print(f"Expected: position='05' (shortcut trigger)")
 
-    assert piece.position == '05', f"Expected '05', got {piece.position}"
+    assert piece.position == "05", f"Expected '05', got {piece.position}"
     print("PASS: Piece lands on shortcut trigger position\n")
 
     # Test 1b: Next move from 05 MUST use diagonal
@@ -36,7 +37,7 @@ def test_automatic_shortcuts():
     print(f"Piece position: {piece.position}")
     print(f"Expected: position='aa'")
 
-    assert piece.position == 'aa', f"Expected 'aa', got {piece.position}"
+    assert piece.position == "aa", f"Expected 'aa', got {piece.position}"
     print("PASS: Next move from shortcut position uses diagonal\n")
 
     # Test 2: Move piece to land on 10
@@ -44,7 +45,7 @@ def test_automatic_shortcuts():
     print("-" * 50)
 
     piece2 = player.pieces[1]
-    piece2.position = '09'
+    piece2.position = "09"
     piece2.is_active = True
     piece2.has_moved = True
 
@@ -55,7 +56,7 @@ def test_automatic_shortcuts():
     print(f"Piece position: {piece2.position}")
     print(f"Expected: position='10'")
 
-    assert piece2.position == '10', f"Expected '10', got {piece2.position}"
+    assert piece2.position == "10", f"Expected '10', got {piece2.position}"
     print("PASS: Piece lands on shortcut trigger position\n")
 
     # Test 2b: Next move from 10 MUST use diagonal
@@ -69,7 +70,7 @@ def test_automatic_shortcuts():
     print(f"Piece position: {piece2.position}")
     print(f"Expected: position='xx'")
 
-    assert piece2.position == 'xx', f"Expected 'xx', got {piece2.position}"
+    assert piece2.position == "xx", f"Expected 'xx', got {piece2.position}"
     print("PASS: Next move from shortcut position uses diagonal\n")
 
     # Test 3: Move on right diagonal
@@ -83,7 +84,7 @@ def test_automatic_shortcuts():
     print(f"Piece position: {piece.position}")
     print(f"Expected: position='cc'")
 
-    assert piece.position == 'cc', f"Expected 'cc', got {piece.position}"
+    assert piece.position == "cc", f"Expected 'cc', got {piece.position}"
     print("PASS: Movement along right diagonal\n")
 
     # Test 4: From cc, move toward goal
@@ -97,12 +98,13 @@ def test_automatic_shortcuts():
     print(f"Piece position: {piece.position}")
     print(f"Expected: position='pp'")
 
-    assert piece.position == 'pp', f"Expected 'pp', got {piece.position}"
+    assert piece.position == "pp", f"Expected 'pp', got {piece.position}"
     print("PASS: cc moves toward goal\n")
 
-    print("="*50)
+    print("=" * 50)
     print("ALL AUTOMATIC SHORTCUT TESTS PASSED!")
-    print("="*50)
+    print("=" * 50)
+
 
 if __name__ == "__main__":
     test_automatic_shortcuts()

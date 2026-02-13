@@ -11,7 +11,9 @@ class PlayerController(ABC):
     """Abstract base for all player controllers (human, random, RL, MCTS, …)."""
 
     @abstractmethod
-    def choose_move(self, game_state: dict, legal_moves: list) -> tuple[int, int] | None:
+    def choose_move(
+        self, game_state: dict, legal_moves: list
+    ) -> tuple[int, int, str | None] | None:
         """
         Pick one move from legal_moves.
 
@@ -20,16 +22,18 @@ class PlayerController(ABC):
             legal_moves: list of (piece_id, steps, dest) from game.get_legal_moves()
 
         Returns:
-            (piece_id, steps) to execute, or None to skip remaining moves
+            (piece_id, steps, destination) to execute, or None to skip remaining moves
         """
 
 
 class RandomController(PlayerController):
     """Baseline AI — picks moves uniformly at random."""
 
-    def choose_move(self, game_state: dict, legal_moves: list) -> tuple[int, int]:
-        piece_id, steps, _dest = random.choice(legal_moves)
-        return piece_id, steps
+    def choose_move(
+        self, game_state: dict, legal_moves: list
+    ) -> tuple[int, int, str | None]:
+        piece_id, steps, dest = random.choice(legal_moves)
+        return piece_id, steps, dest
 
 
 class HumanController(PlayerController):
@@ -44,7 +48,9 @@ class HumanController(PlayerController):
         self.game = game
         self.player = player
 
-    def choose_move(self, game_state: dict, legal_moves: list) -> tuple[int, int] | None:
+    def choose_move(
+        self, game_state: dict, legal_moves: list
+    ) -> tuple[int, int, str | None] | None:
         """Two-step interactive input loop extracted from cli_game.py."""
         while True:
             # STEP 1: Choose piece
@@ -67,9 +73,15 @@ class HumanController(PlayerController):
                     option_idx += 1
                 else:
                     piece = self.player.get_piece_by_id(piece_id)
-                    stack_size = len(self.game._get_stack_at_position(self.player.player_id, piece.position))
+                    stack_size = len(
+                        self.game._get_stack_at_position(
+                            self.player.player_id, piece.position
+                        )
+                    )
                     stack_str = f" [Stack x{stack_size}]" if stack_size > 1 else ""
-                    print(f"  {option_idx}. Piece {piece_id}{stack_str} (at pos {piece.position})")
+                    print(
+                        f"  {option_idx}. Piece {piece_id}{stack_str} (at pos {piece.position})"
+                    )
                     piece_map[option_idx] = piece_id
                     option_idx += 1
 
@@ -104,10 +116,10 @@ class HumanController(PlayerController):
             for steps, dest in move_options:
                 if selected_piece_id != -1:
                     piece = self.player.get_piece_by_id(selected_piece_id)
-                    if piece.position == '00' and piece.has_moved:
+                    if piece.position == "00" and piece.has_moved:
                         dest_str = "EXIT (finish)"
                     else:
-                        dest_str = "GOAL" if dest == '00' else f"pos {dest}"
+                        dest_str = "GOAL" if dest == "00" else f"pos {dest}"
                         if self.game.board.triggers_shortcut(dest):
                             dest_str += " (diagonal shortcut)"
                 else:
@@ -137,8 +149,8 @@ class HumanController(PlayerController):
                 print("Invalid choice. Try again.")
                 continue
 
-            steps, _dest = move_map[move_choice]
-            return selected_piece_id, steps
+            steps, dest = move_map[move_choice]
+            return selected_piece_id, steps, dest
 
 
 class MonteCarloController(PlayerController):
@@ -151,42 +163,48 @@ class MonteCarloController(PlayerController):
         self.player_id = player_id
         self.num_simulations = num_simulations
 
-    def choose_move(self, game_state: dict, legal_moves: list) -> tuple[int, int]:
+    def choose_move(
+        self, game_state: dict, legal_moves: list
+    ) -> tuple[int, int, str | None]:
         # Deduplicate: stacked pieces at the same position produce identical outcomes,
-        # so group by (position_or_entry, steps) and keep one representative piece_id.
-        seen = {}  # (position_key, steps) -> piece_id
-        for pid, steps, _dest in legal_moves:
+        # so group by (position_or_entry, steps, dest) and keep one representative.
+        seen = {}  # key -> (piece_id, steps, dest)
+        for pid, steps, dest in legal_moves:
             if pid == -1:
-                key = ('entry', steps)
+                key = ("entry", steps, dest)
             else:
                 pos = self.game.players[self.player_id].get_piece_by_id(pid).position
-                key = (pos, steps)
+                key = (pos, steps, dest)
             if key not in seen:
-                seen[key] = pid
-        candidates = [(pid, steps) for (_, steps), pid in seen.items()]
+                seen[key] = (pid, steps, dest)
+        candidates = list(seen.values())
 
         if len(candidates) == 1:
             return candidates[0]
 
         results = []
-        for piece_id, steps in candidates:
+        for piece_id, steps, dest in candidates:
             wins = sum(
-                self._simulate(piece_id, steps)
+                self._simulate(piece_id, steps, dest)
                 for _ in range(self.num_simulations)
             )
             win_rate = wins / self.num_simulations
-            results.append(((piece_id, steps), win_rate))
+            results.append(((piece_id, steps, dest), win_rate))
 
         results.sort(key=lambda r: r[1], reverse=True)
 
-        print(f"  [MC] Evaluating {len(results)} moves ({self.num_simulations} sims each):")
-        for (pid, st), wr in results:
-            marker = " <<" if (pid, st) == results[0][0] else ""
-            print(f"    piece={pid} steps={st}: {wr:.1%}{marker}")
+        print(
+            f"  [MC] Evaluating {len(results)} moves ({self.num_simulations} sims each):"
+        )
+        for (pid, st, dst), wr in results:
+            marker = " <<" if (pid, st, dst) == results[0][0] else ""
+            print(f"    piece={pid} steps={st} dest={dst}: {wr:.1%}{marker}")
 
         return results[0][0]
 
-    def _simulate(self, piece_id: int, steps: int) -> float:
+    def _simulate(
+        self, piece_id: int, steps: int, destination: str | None = None
+    ) -> float:
         """Run one random rollout. Win = finishing at the next available rank."""
         sim = self._clone_game()
         player_id = self.player_id
@@ -194,7 +212,7 @@ class MonteCarloController(PlayerController):
         target_rank_idx = len(sim.rankings)
 
         # Apply the candidate move
-        success, captured = sim.move_piece(player_id, piece_id, steps)
+        success, captured = sim.move_piece(player_id, piece_id, steps, destination)
         if not success:
             return 0.0
 
@@ -254,8 +272,8 @@ class MonteCarloController(PlayerController):
                 sim.accumulated_moves = []
                 break
 
-            pid, steps, _dest = random.choice(legal)
-            success, captured = sim.move_piece(player_id, pid, steps)
+            pid, steps, dest = random.choice(legal)
+            success, captured = sim.move_piece(player_id, pid, steps, dest)
 
             if not success:
                 # Shouldn't happen, but avoid infinite loop

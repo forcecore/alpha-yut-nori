@@ -5,20 +5,28 @@ CLI interface for playing Yut Nori.
 
 import os
 from typing import Optional
-from yoot import YutGame, PlayerController, HumanController, RandomController, MonteCarloController, MCTSController
+
+from yoot import (
+    HumanController,
+    MCTSController,
+    MonteCarloController,
+    PlayerController,
+    RandomController,
+    YutGame,
+)
 from yoot.config import DEFAULT_PLAYER_NAMES
 
 
 def clear_screen():
     """Clear terminal screen."""
-    os.system('clear' if os.name != 'nt' else 'cls')
+    os.system("clear" if os.name != "nt" else "cls")
 
 
 def display_board(game: YutGame):
     """Display current board state."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("YUT NORI (윷놀이)")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     # Show board
     print(game.board.render_board(game.get_all_pieces()))
@@ -33,8 +41,10 @@ def display_board(game: YutGame):
         waiting = len(player.get_inactive_pieces())
 
         marker = ">>> " if player.player_id == game.current_player_idx else "    "
-        print(f"{marker}Player {player.player_id} ({player.name}): "
-              f"On board: {active}, Finished: {finished}, Waiting: {waiting}")
+        print(
+            f"{marker}Player {player.player_id} ({player.name}): "
+            f"On board: {active}, Finished: {finished}, Waiting: {waiting}"
+        )
 
         # Show positions of active pieces
         if active > 0:
@@ -49,7 +59,9 @@ def display_board(game: YutGame):
     print("-" * 60)
 
 
-def display_game_status(game: YutGame, current_player_id: Optional[int] = None, show_board: bool = True):
+def display_game_status(
+    game: YutGame, current_player_id: Optional[int] = None, show_board: bool = True
+):
     """
     Display current game status for all players.
 
@@ -67,13 +79,21 @@ def display_game_status(game: YutGame, current_player_id: Optional[int] = None, 
         waiting = len(p.get_inactive_pieces())
 
         # Highlight current player
-        marker = ">>> " if current_player_id is not None and p.player_id == current_player_id else "    "
+        marker = (
+            ">>> "
+            if current_player_id is not None and p.player_id == current_player_id
+            else "    "
+        )
         status_line = f"{marker}Player {p.player_id} ({p.name}): "
         status_line += f"On board: {active}, Finished: {finished}, Waiting: {waiting}"
         print(status_line)
 
         # Show positions of active pieces for current player
-        if current_player_id is not None and p.player_id == current_player_id and active > 0:
+        if (
+            current_player_id is not None
+            and p.player_id == current_player_id
+            and active > 0
+        ):
             stacks = p.get_stacks()
             for pos, pieces in sorted(stacks.items()):
                 piece_ids = [piece.piece_id for piece in pieces]
@@ -103,7 +123,7 @@ def display_recent_moves(game: YutGame, count: int = 5):
 def get_player_names() -> tuple[list[str], int]:
     """Get number of players and their names from user."""
     print("Welcome to Yut Nori!")
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
 
     # Get number of players
     while True:
@@ -123,7 +143,9 @@ def get_player_names() -> tuple[list[str], int]:
 
     names = []
     for i in range(num_players):
-        default = DEFAULT_PLAYER_NAMES[i] if i < len(DEFAULT_PLAYER_NAMES) else f"Player {i}"
+        default = (
+            DEFAULT_PLAYER_NAMES[i] if i < len(DEFAULT_PLAYER_NAMES) else f"Player {i}"
+        )
         name = input(f"Player {i} name (default: {default}): ").strip()
         if not name:
             name = default
@@ -142,9 +164,9 @@ def play_turn(game: YutGame, controller) -> bool:
     player = game.get_current_player()
     is_human = isinstance(controller, HumanController)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"{player.name}'s turn (Player {player.player_id})")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Display current game status before turn
     display_game_status(game, player.player_id)
@@ -154,7 +176,7 @@ def play_turn(game: YutGame, controller) -> bool:
     if is_human:
         print("Press Enter to throw yut sticks (or 'q' to quit)...")
         user_input = input().strip().lower()
-        if user_input == 'q':
+        if user_input == "q":
             return False
 
     throws = game.throw_phase()
@@ -193,7 +215,7 @@ def play_turn(game: YutGame, controller) -> bool:
             game.accumulated_moves = []
             break
 
-        piece_id, steps = choice
+        piece_id, steps, dest = choice
 
         # Announce AI moves
         if not is_human:
@@ -201,10 +223,12 @@ def play_turn(game: YutGame, controller) -> bool:
                 print(f"  >> AI enters new piece with move {steps}")
             else:
                 piece = player.get_piece_by_id(piece_id)
-                print(f"  >> AI moves piece {piece_id} (at pos {piece.position}) with move {steps}")
+                print(
+                    f"  >> AI moves piece {piece_id} (at pos {piece.position}) with move {steps}"
+                )
 
         # Execute move
-        success, captured = game.move_piece(player.player_id, piece_id, steps)
+        success, captured = game.move_piece(player.player_id, piece_id, steps, dest)
 
         if not success:
             print("Move failed. Try again.")
@@ -212,9 +236,9 @@ def play_turn(game: YutGame, controller) -> bool:
 
         # Capture grants bonus throw
         if captured:
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("CAPTURE! Bonus throw!")
-            print("="*60)
+            print("=" * 60)
 
             bonus_throws = game.throw_phase(is_bonus=True)
             print(f"\nBonus throw results: ", end="")
@@ -246,18 +270,24 @@ def main():
     any_human = False
     for i, name in enumerate(player_names):
         while True:
-            choice = input(f"Player type for {name}? (h)uman / (r)andom AI / (m)onte Carlo AI / (a)lphaYutNori MCTS [default h]: ").strip().lower()
-            if choice in ('', 'h'):
+            choice = (
+                input(
+                    f"Player type for {name}? (h)uman / (r)andom AI / (m)onte Carlo AI / (a)lphaYutNori MCTS [default h]: "
+                )
+                .strip()
+                .lower()
+            )
+            if choice in ("", "h"):
                 controllers[i] = HumanController(game, game.players[i])
                 any_human = True
                 break
-            if choice == 'r':
+            if choice == "r":
                 controllers[i] = RandomController()
                 break
-            if choice == 'm':
+            if choice == "m":
                 controllers[i] = MonteCarloController(game, i)
                 break
-            if choice == 'a':
+            if choice == "a":
                 controllers[i] = MCTSController(game, i)
                 break
             print("Please enter 'h', 'r', 'm', or 'a'.")
@@ -285,13 +315,13 @@ def main():
             clear_screen()
             display_board(game)
             display_recent_moves(game, count=10)
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print("FINAL RANKINGS")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
             for place, pid in enumerate(game.rankings, 1):
                 label = "does the dishes!" if place == len(game.rankings) else ""
                 print(f"  #{place}  {game.players[pid].name}  {label}")
-            print(f"{'='*60}\n")
+            print(f"{'=' * 60}\n")
             break
 
         # Next player

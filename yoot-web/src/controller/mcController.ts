@@ -15,34 +15,33 @@ export class MonteCarloController implements PlayerController {
     this.numSimulations = numSimulations;
   }
 
-  async chooseMove(_gameState: GameState, legalMoves: LegalMove[]): Promise<{ pieceId: number; steps: number }> {
+  async chooseMove(_gameState: GameState, legalMoves: LegalMove[]): Promise<{ pieceId: number; steps: number; destination?: string }> {
     // Deduplicate: stacked pieces at same position produce identical outcomes
-    const seen = new Map<string, number>(); // key -> pieceId
-    for (const { pieceId, steps } of legalMoves) {
+    const seen = new Map<string, LegalMove>();
+    for (const move of legalMoves) {
       let key: string;
-      if (pieceId === -1) {
-        key = `entry:${steps}`;
+      if (move.pieceId === -1) {
+        key = `entry:${move.steps}:${move.destination}`;
       } else {
-        const pos = this.game.players[this.playerId].getPieceById(pieceId).position;
-        key = `${pos}:${steps}`;
+        const pos = this.game.players[this.playerId].getPieceById(move.pieceId).position;
+        key = `${pos}:${move.steps}:${move.destination}`;
       }
-      if (!seen.has(key)) seen.set(key, pieceId);
+      if (!seen.has(key)) seen.set(key, move);
     }
 
-    const candidates: { pieceId: number; steps: number }[] = [];
-    for (const [key, pieceId] of seen) {
-      const steps = Number(key.split(':')[1]);
-      candidates.push({ pieceId, steps });
+    const candidates = [...seen.values()];
+
+    if (candidates.length === 1) {
+      const c = candidates[0];
+      return { pieceId: c.pieceId, steps: c.steps, destination: c.destination };
     }
 
-    if (candidates.length === 1) return candidates[0];
-
-    const results: { move: { pieceId: number; steps: number }; winRate: number }[] = [];
+    const results: { move: LegalMove; winRate: number }[] = [];
 
     for (const move of candidates) {
       let wins = 0;
       for (let i = 0; i < this.numSimulations; i++) {
-        wins += this.simulate(move.pieceId, move.steps);
+        wins += this.simulate(move.pieceId, move.steps, move.destination);
       }
       results.push({ move, winRate: wins / this.numSimulations });
     }
@@ -52,18 +51,19 @@ export class MonteCarloController implements PlayerController {
     console.log(`[MC] Evaluating ${results.length} moves (${this.numSimulations} sims each):`);
     for (const { move, winRate } of results) {
       const marker = move === results[0].move ? ' <<' : '';
-      console.log(`  piece=${move.pieceId} steps=${move.steps}: ${(winRate * 100).toFixed(1)}%${marker}`);
+      console.log(`  piece=${move.pieceId} steps=${move.steps} dest=${move.destination}: ${(winRate * 100).toFixed(1)}%${marker}`);
     }
 
-    return results[0].move;
+    const best = results[0].move;
+    return { pieceId: best.pieceId, steps: best.steps, destination: best.destination };
   }
 
-  private simulate(pieceId: number, steps: number): number {
+  private simulate(pieceId: number, steps: number, destination?: string): number {
     const sim = this.game.clone();
     const playerId = this.playerId;
     const targetRankIdx = sim.rankings.length;
 
-    const { success, captured } = sim.movePiece(playerId, pieceId, steps);
+    const { success, captured } = sim.movePiece(playerId, pieceId, steps, destination);
     if (!success) return 0;
 
     if (captured) sim.throwPhase(true);
@@ -113,7 +113,7 @@ export class MonteCarloController implements PlayerController {
       }
 
       const pick = legal[Math.floor(Math.random() * legal.length)];
-      const { success, captured } = sim.movePiece(playerId, pick.pieceId, pick.steps);
+      const { success, captured } = sim.movePiece(playerId, pick.pieceId, pick.steps, pick.destination);
 
       if (!success) {
         sim.accumulatedMoves = [];
