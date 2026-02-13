@@ -3,6 +3,6 @@
 DEFAULT_PLAYER_NAMES = [
     "Satoshi Nakamoto BTC",
     "Vitalik Buterin ETH",
-    "Billy Markus DOGE",
+    "Markus-Palmer DOGE",
     "Sam Altman WLD",
 ]
