@@ -171,6 +171,18 @@ export class YutGame {
     }
     if (newPos === null) return { success: false, captured: false };
 
+    // Overshoot past goal — piece exits immediately
+    if (newPos === 'EXIT') {
+      const stack = this.getStackAtPosition(playerId, currentPos);
+      const pieceStr = stack.length === 1 ? `Piece ${pieceId}` : `Stack (x${stack.length})`;
+      for (const stacked of stack) {
+        stacked.finish();
+      }
+      this.removeAccumulatedMove(steps);
+      this.logMove(`${player.name}'s ${pieceStr} exited the board!`);
+      return { success: true, captured: false };
+    }
+
     // Get all pieces in stack at current position
     const stack = this.getStackAtPosition(playerId, currentPos);
 

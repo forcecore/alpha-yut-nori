@@ -78,11 +78,11 @@ export class Board {
     if (dest !== null) return dest;
 
     // Non-exact landing: if this position can reach 00 with a smaller step,
-    // a larger step overshoots past 00 — land on 00 instead.
+    // a larger step overshoots past 00 — piece exits immediately.
     if (allowOvershoot) {
       const entries = Board.MOVE_TABLE[currentPos];
       if (entries && Object.values(entries).includes('00')) {
-        return '00';
+        return 'EXIT';
       }
     }
     return null;
